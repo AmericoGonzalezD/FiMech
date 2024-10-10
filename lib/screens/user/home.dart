@@ -28,8 +28,7 @@ class _HomePageState extends State<HomePage> {
       ProfilePage2()
     ];
 
-    Color selectedColor = Colors.green[
-        400]!; // Color del elemento seleccionado en la barra de navegación inferior
+    Color selectedColor = Color(0xFF258EB4)!; // Color del elemento seleccionado en la barra de navegación inferior
     Color unselectedColor = Colors.grey[
         600]!; // Color del elemento no seleccionado en la barra de navegación inferior
 
