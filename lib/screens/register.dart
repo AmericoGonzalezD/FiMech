@@ -198,7 +198,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             : 'Ingresa mínimo 8 caracteres', // Mensaje de error si la contraseña no cumple con el requisito de longitud.
                       ),
                     ),
-                    const SizedBox(height: 40.0),
+                    /*const SizedBox(height: 40.0),
                     CheckboxListTile(
                       title: const Text('Registrarse como administrador'),
                       value: _isAdmin,
@@ -207,7 +207,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           _isAdmin = value!;
                         });
                       },
-                    ),
+                    ),*/
                     const SizedBox(height: 40.0),
                     ElevatedButton(
                       // Botón para registrarse.
@@ -215,7 +215,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         minimumSize: const Size(
                             double.infinity, 50), // Tamaño mínimo del botón.
                         backgroundColor:
-                            Colors.green[400], // Color de fondo del botón.
+                        Color(0xFF258EB4), // Color de fondo del botón.
                         foregroundColor:
                             Colors.white, // Color del texto del botón.
                       ),
@@ -289,7 +289,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               text: 'Accede',
                               style: GoogleFonts.roboto(
                                 fontSize: 16,
-                                color: const Color(0xFF5DB075),
+                                color: const Color(0xFF258EB4),
                               ),
                             ),
                           ],

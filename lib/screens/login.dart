@@ -222,7 +222,7 @@ class _LoginPageState extends State<LoginPage> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: Colors.green[400],
+                      backgroundColor: Color(0xFF258EB4),
                       foregroundColor: Colors.white,
                     ),
                     child: const Text('Iniciar sesión'),
@@ -254,7 +254,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: const Text(
                       '¿Olvidaste tu contraseña?',
                       style: TextStyle(
-                        color: Color(0xFF5DB075),
+                        color: Color(0xFF258EB4),
                       ),
                     ),
                   ),
@@ -278,7 +278,7 @@ class _LoginPageState extends State<LoginPage> {
                             text: 'Regístrate',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Color(0xFF5DB075),
+                              color: Color(0xFF258EB4),
                             ),
                           ),
                         ],

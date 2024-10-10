@@ -117,7 +117,7 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Colors.green[400],
+                    backgroundColor: Color(0xFF258EB4),
                     foregroundColor: Colors.white,
                   ),
                   child: const Text('Recuperar contraseña'),
@@ -157,7 +157,7 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                           text: 'Accede',
                           style: GoogleFonts.roboto(
                             fontSize: 16,
-                            color: const Color(0xFF5DB075),
+                            color: Color(0xFF258EB4),
                           ),
                         ),
                       ],
