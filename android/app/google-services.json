@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "850530092902",
+    "project_id": "fimech-50cd0",
+    "storage_bucket": "fimech-50cd0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:850530092902:android:eb00ddf79745161d0f6aa7",
+        "android_client_info": {
+          "package_name": "com.fimech.fimech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcV288savAEUbM-p8wwhu6OsWszSL88oo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
