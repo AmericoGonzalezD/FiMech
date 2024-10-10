@@ -12,15 +12,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  Platform.isAndroid
-      ? await Firebase.initializeApp(
-          options: const FirebaseOptions(
-              apiKey: "AIzaSyBcV288savAEUbM-p8wwhu6OsWszSL88oo",
-              appId: "1:850530092902:android:eb00ddf79745161d0f6aa7",
-              messagingSenderId: "850530092902",
-              projectId: "fimech-50cd0"))
-      : await Firebase.initializeApp();
-
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
