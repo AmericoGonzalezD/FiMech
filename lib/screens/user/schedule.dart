@@ -169,7 +169,7 @@ class _SchedulePageState extends State<SchedulePage> {
         padding: const EdgeInsets.only(bottom: 10),
         child: FloatingActionButton(
           backgroundColor: Color(0xFF258EB4),
-          onPressed: () {/*
+          onPressed: () {
             Navigator.push(
               // Navega a la página de notificaciones (NotifiesPage)
               context,
@@ -177,7 +177,7 @@ class _SchedulePageState extends State<SchedulePage> {
                   builder: (context) =>
                       const CiteForm()), // Crea una ruta para la página de notificaciones
             );
-          */},
+          },
           child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
