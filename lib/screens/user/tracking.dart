@@ -13,9 +13,9 @@ class TrackingPage extends StatefulWidget {
 class _TrackingPageState extends State<TrackingPage> {
   int _buttonIndex = 0;
   final _ScheduleWidgets = [
-    const ActualTracking(),
+    //const ActualTracking(),
     //CompletedWidget
-    const CompletedTracking(),
+    //const CompletedTracking(),
   ];
 
   @override
@@ -39,7 +39,6 @@ class _TrackingPageState extends State<TrackingPage> {
         ), // Título de la barra de aplicación
       ),
       body: SafeArea(
-      child:Container()/*
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +130,7 @@ class _TrackingPageState extends State<TrackingPage> {
               _ScheduleWidgets[_buttonIndex],
             ],
           ),
-        ),*/
+        ),
       ),
     );
   }
