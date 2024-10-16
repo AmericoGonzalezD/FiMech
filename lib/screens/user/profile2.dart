@@ -56,7 +56,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
         //      )
         //     ],
       ),
-      /*bottomNavigationBar: WhatsappButtonPerfil(),
+      bottomNavigationBar: WhatsappButtonPerfil(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -297,7 +297,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
             ),
           ),
         ),
-      ),*/
+      ),
     );
   }
 }
