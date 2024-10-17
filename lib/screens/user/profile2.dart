@@ -56,7 +56,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
         //      )
         //     ],
       ),
-      bottomNavigationBar: WhatsappButtonPerfil(),
+      //bottomNavigationBar: WhatsappButtonPerfil(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -99,7 +99,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
                                 },
                                 child: const Text(
                                   'Cambiar foto de perfil',
-                                  style: TextStyle(color: Colors.green),
+                                  style: TextStyle(color: Color(0xFF258EB4)),
                                 ),
                               ),
                             ],
@@ -135,6 +135,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
                                     },
                                     decoration: const InputDecoration(
                                         hintText: 'Nombre'),
+
                                   ),
                                   actions: [
                                     TextButton(
@@ -193,6 +194,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
                             title: 'E-mail:',
                             value: _userData?['email'] ?? 'N/A',
                             icon: Icons.copy,
+
                             onPressed: () {
                               Clipboard.setData(ClipboardData(
                                   text: _userData?['email'] ?? 'N/A'));

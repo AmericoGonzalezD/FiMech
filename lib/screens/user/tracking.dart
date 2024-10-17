@@ -13,9 +13,9 @@ class TrackingPage extends StatefulWidget {
 class _TrackingPageState extends State<TrackingPage> {
   int _buttonIndex = 0;
   final _ScheduleWidgets = [
-    //const ActualTracking(),
+    const ActualTracking(),
     //CompletedWidget
-    //const CompletedTracking(),
+    const CompletedTracking(),
   ];
 
   @override
@@ -81,7 +81,7 @@ class _TrackingPageState extends State<TrackingPage> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: _buttonIndex == 0
-                                  ? Colors.green[300]
+                                  ? Color(0xFF258EB4)
                                   : Colors.grey[100],
                             ),
                             child: Text("Actuales",
@@ -106,7 +106,7 @@ class _TrackingPageState extends State<TrackingPage> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: _buttonIndex == 1
-                                  ? Colors.green[300]
+                                  ? Color(0xFF258EB4)
                                   : Colors.grey[100],
                             ),
                             child: Text("Completados",
