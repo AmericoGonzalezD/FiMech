@@ -198,7 +198,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             : 'Ingresa mínimo 8 caracteres', // Mensaje de error si la contraseña no cumple con el requisito de longitud.
                       ),
                     ),
-                    /*const SizedBox(height: 40.0),
+                    const SizedBox(height: 40.0),
                     CheckboxListTile(
                       title: const Text('Registrarse como administrador'),
                       value: _isAdmin,
@@ -207,7 +207,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           _isAdmin = value!;
                         });
                       },
-                    ),*/
+                    ),
                     const SizedBox(height: 40.0),
                     ElevatedButton(
                       // Botón para registrarse.

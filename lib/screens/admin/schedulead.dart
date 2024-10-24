@@ -88,7 +88,7 @@ class _SchedulePageADState extends State<SchedulePageAD> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           color: _buttonIndex == 0
-                              ? Colors.green[300]
+                              ? Color(0xFF258EB4)
                               : Colors.grey[100],
                         ),
                         child: Text("Próximas",
@@ -114,7 +114,7 @@ class _SchedulePageADState extends State<SchedulePageAD> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           color: _buttonIndex == 1
-                              ? Colors.green[300]
+                              ? Color(0xFF258EB4)
                               : Colors.grey[100],
                         ),
                         child: Text("Completadas",
@@ -140,7 +140,7 @@ class _SchedulePageADState extends State<SchedulePageAD> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           color: _buttonIndex == 2
-                              ? Colors.green[300]
+                              ? Color(0xFF258EB4)
                               : Colors.grey[100],
                         ),
                         child: Text(
