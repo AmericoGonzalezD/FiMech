@@ -40,7 +40,7 @@ class WhatsappButtonAD extends StatelessWidget {
                         idCita);
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF258EB4),
+            backgroundColor: Colors.green,
             foregroundColor: Colors.white,
           ),
           child: const Row(
@@ -86,7 +86,7 @@ class WhatsappButtonPerfil extends StatelessWidget {
             launchWhatsapp(number: '8121912748', message: "Hola");
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF258EB4),
+            backgroundColor: Colors.green,
             foregroundColor: Colors.white,
           ),
           child: const Row(

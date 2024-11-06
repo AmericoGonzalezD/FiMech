@@ -38,8 +38,9 @@ class _ScheduleDetailsPageADState extends State<ScheduleDetailsPageAD> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      bottomNavigationBar: WhatsappButtonAD(
-          widget._appointment.id, widget._appointment.auto, userPhoneNumber!),
+      bottomNavigationBar: userPhoneNumber == null
+          ? CircularProgressIndicator() // O algún widget de carga
+          : WhatsappButtonAD(widget._appointment.id, widget._appointment.auto, userPhoneNumber!),
       body: SafeArea(
           child: SingleChildScrollView(
         child: Padding(

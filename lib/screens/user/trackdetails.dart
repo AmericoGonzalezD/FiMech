@@ -58,7 +58,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         setState(() {
           var condicion = elemento1.progreso2;
           steps.addAll(_addToStep(elemento1.progreso2, elemento1, null, null,
-              null, condicion, Colors.green));
+              null, condicion, Color(0xFF258EB4)));
         });
       }
       if (paso1Cumplido && elemento2.status2 == 'Diagnostico') {
@@ -66,7 +66,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         setState(() {
           var condicion = elemento2.progreso2;
           steps.addAll(_addToStep(elemento2.progreso2, elemento1, elemento2,
-              null, null, condicion, Colors.green));
+              null, null, condicion, Color(0xFF258EB4)));
         });
       }
       if (paso2Cumplido && elemento3.status2 == 'Reparacion') {
@@ -74,7 +74,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         setState(() {
           var condicion = elemento3.progreso2;
           steps.addAll(_addToStep(elemento3.progreso2, elemento1, elemento2,
-              elemento3, null, condicion, Colors.green));
+              elemento3, null, condicion, Color(0xFF258EB4)));
         });
       }
       if (paso3Cumplido && elemento4.status2 == 'Completado') {
@@ -82,7 +82,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         setState(() {
           var condicion = elemento4.progreso2;
           steps.addAll(_addToStep(elemento4.progreso2, elemento1, elemento2,
-              elemento3, elemento4, condicion, Colors.green));
+              elemento3, elemento4, condicion, Color(0xFF258EB4)));
         });
       }
     }
@@ -152,7 +152,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         });
   }
 
-  void _openTrackingDetailsForm(
+  /*void _openTrackingDetailsForm(
       BuildContext context,
       Appointment? appointment,
       Diagnostico? diagnostico,
@@ -164,7 +164,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
           builder: (context) => TrackFormAD(
               appointment!, diagnostico!, diagnostico2!, diagnostico3!)),
     );
-  }
+  }*/
 
   VerticalStepper _creacionStepper(List<step.Step> steps) {
     return VerticalStepper(steps: steps, dashLength: 2);
@@ -319,7 +319,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
                         width: 115,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.green[300],
+                          color: Color(0xFF258EB4),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(
