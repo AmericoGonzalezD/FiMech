@@ -466,8 +466,9 @@ class _TrackFormADState extends State<TrackFormAD> {
                                   return null;
                                 },
                                 controller: _costController,
-                                keyboardType: const TextInputType.numberWithOptions(
-                                    decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 inputFormatters: <TextInputFormatter>[
                                   FilteringTextInputFormatter.allow(
                                       RegExp(r'^\d+\.?\d{0,2}$')),
@@ -476,40 +477,6 @@ class _TrackFormADState extends State<TrackFormAD> {
                               const SizedBox(
                                 height: 20,
                               ),
-                              /* Container(
-                                alignment: Alignment.centerLeft,
-                                child: const Text(
-                                  "Imagenes adjuntas:",
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 6,
-                              ),
-                              InkWell(
-                                onTap: () {},
-                                child: Container(
-                                  width: 115,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green[400],
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      "Agregar",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ), */
                             ],
                           ),
                         )
