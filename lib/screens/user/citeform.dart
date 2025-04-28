@@ -1,15 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mailer/mailer.dart';
-import 'package:mailer/smtp_server/gmail.dart';
 import 'package:fimech/screens/user/home.dart';
 import 'package:fimech/screens/user/widgets/sectionheading.dart';
-import 'package:fimech/services/appointment_service.dart';
 
 class CiteForm extends StatefulWidget {
-  const CiteForm({super.key});
+  final Map<String, dynamic>? workshopData;
+
+  const CiteForm({super.key, this.workshopData});
 
   @override
   State<CiteForm> createState() => _CiteFormState();
@@ -17,11 +15,22 @@ class CiteForm extends StatefulWidget {
 
 class _CiteFormState extends State<CiteForm> {
   late String userId;
+  String? workshopName;
+  String? workshopAddress;
+  final TextEditingController _workshopNameController = TextEditingController();
+  final TextEditingController _workshopAddressController =
+  TextEditingController();
 
   @override
   void initState() {
     super.initState();
     getUserId();
+    if (widget.workshopData != null) {
+      workshopName = widget.workshopData!['workshopName'];
+      workshopAddress = widget.workshopData!['workshopAddress'];
+      _workshopNameController.text = workshopName ?? '';
+      _workshopAddressController.text = workshopAddress ?? '';
+    }
   }
 
   Future<void> getUserId() async {
@@ -35,7 +44,6 @@ class _CiteFormState extends State<CiteForm> {
     }
   }
 
-  // Estado de la cita
   final _formKey = GlobalKey<FormState>();
   String _model = '';
   String _reason = '';
@@ -56,16 +64,6 @@ class _CiteFormState extends State<CiteForm> {
     }
   }
 
-  Future<String> getUserEmail(String userId) async {
-    var userDoc =
-        await FirebaseFirestore.instance.collection('client').doc(userId).get();
-    if (userDoc.exists) {
-      return userDoc.data()!['email'];
-    } else {
-      return '';
-    }
-  }
-
   void _selectTime() async {
     final TimeOfDay? newTime = await showTimePicker(
       context: context,
@@ -81,7 +79,6 @@ class _CiteFormState extends State<CiteForm> {
         newTime.minute,
       );
 
-      // Verificar si la hora seleccionada está dentro del rango permitido
       final TimeOfDay startTime = const TimeOfDay(hour: 9, minute: 0);
       final TimeOfDay endTime = const TimeOfDay(hour: 17, minute: 0);
 
@@ -112,7 +109,7 @@ class _CiteFormState extends State<CiteForm> {
       }
     }
   }
-//Configuración de limite de agendar hora
+
   bool _isTimeInRange(TimeOfDay time, TimeOfDay startTime, TimeOfDay endTime) {
     final int hour = time.hour;
     final int minute = time.minute;
@@ -134,12 +131,6 @@ class _CiteFormState extends State<CiteForm> {
     return true;
   }
 
-  Future<String> IdCiti(String userId) async {
-    var citiId =
-        await AppointmentService().getAppointmentTraking(userId, "Pendiente");
-    return citiId.id;
-  }
-
   Future<void> _saveCite() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -151,69 +142,20 @@ class _CiteFormState extends State<CiteForm> {
         _selectedTime.minute,
       );
 
-      // Verificar si ya existe una cita en la misma fecha y hora
-      QuerySnapshot existingAppointments = await FirebaseFirestore.instance
-          .collection('citas')
-          .where('date', isEqualTo: dateTime)
-          .get();
-
-      if (existingAppointments.docs.isNotEmpty) {
-        // Mostrar alerta si ya hay una cita en ese horario
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Cita no disponible'),
-              content: const Text('Ya existe una cita agendada en esta fecha y hora. Por favor, elige otro horario.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Aceptar'),
-                ),
-              ],
-            );
-          },
-        );
-        return; // Detener el proceso de guardado
-      }
-
-      // Si no hay citas en esa fecha y hora, proceder con la creación
-      DocumentReference appointmentRef =
       await FirebaseFirestore.instance.collection('citas').add({
         'userId': userId,
         'automovil': _model,
         'date': dateTime,
         'motivo': _reason,
         'status': 'Pendiente',
-        'status2': 'Pendiente',
-        'reason': 'Evaluando proceso',
-        'reason2': 'Evaluando proceso',
-        'progreso': 'Pendiente de evaluar',
-        'progreso2': '',
-        'date_update': dateTime,
-        'costo': "",
-        'idMecanico': "",
-        'descriptionService': "",
+        'workshopName': workshopName ?? _workshopNameController.text,
+        'workshopAddress': workshopAddress ?? _workshopAddressController.text,
       });
-
-      await appointmentRef.collection('citasDiagnostico').doc('Aceptado').set({
-        'progreso2': "",
-        'date_update': dateTime,
-        'reason2': "",
-        'costo': "",
-        'descriptionService': "",
-        'status2': '',
-      }, SetOptions(merge: true));
-
-      // Obtener el email del usuario
-      String userEmail = await getUserEmail(userId);
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => HomePage(),
+          builder: (context) => const HomePage(),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -224,206 +166,234 @@ class _CiteFormState extends State<CiteForm> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+        appBar: AppBar(
         title: const Text(
-          'Agendar',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        'Agendar Cita',
+        style: TextStyle(fontWeight: FontWeight.bold),
+    ),
+    ),
+    body: SafeArea(
+    child: SingleChildScrollView(
+    child: Padding(
+    padding: const EdgeInsets.all(24),
+    child: Form(
+    key: _formKey,
+    child: Column(
+    children: [
+    const SectionHeading(
+    title: "Detalles de la cita",
+    showActionButton: false,
+    ),
+    const SizedBox(height: 30),
+    if (workshopName != null)
+    Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+    const Text(
+    "Taller seleccionado:",
+    style: TextStyle(
+    fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+    const SizedBox(height: 6),
+    Text(
+    workshopName!,
+    style: const TextStyle(fontSize: 14),
+    ),
+    const SizedBox(height: 12),
+    const Text(
+    "Dirección del taller:",
+    style: TextStyle(
+    fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+    const SizedBox(height: 6),
+    Text(
+    workshopAddress!,
+    style: const TextStyle(fontSize: 14),
+    ),
+    const SizedBox(height: 24),
+    ],
+    )
+    else
+    Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+    const Text(
+    "Nombre del taller:",
+    style: TextStyle(
+    fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+    const SizedBox(height: 6),
+    TextFormField(
+    controller: _workshopNameController,
+    decoration: const InputDecoration(
+    hintText: 'Ingrese el nombre del taller',
+    hintStyle: TextStyle(fontSize: 14)),
+    validator: (value) {
+    if (value == null || value.isEmpty) {
+    return 'Por favor, ingrese el nombre del taller';
+    }
+    return null;
+    },
+    ),
+    const SizedBox(height: 24),
+    const Text(
+    "Dirección del taller:",
+    style: TextStyle(
+    fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+    const SizedBox(height: 6),
+    TextFormField(
+    controller: _workshopAddressController,
+    decoration: const InputDecoration(
+    hintText: 'Ingrese la dirección del taller',
+    hintStyle: TextStyle(fontSize: 14)),
+    validator: (value) {
+    if (value == null || value.isEmpty) {
+    return 'Por favor, ingrese la dirección del taller';
+    }
+    return null;
+    },
+    ),
+    const SizedBox(height: 24),
+    ],
+    ),
+    Container(
+    alignment: Alignment.centerLeft,
+    child: const Text(
+    "Ingresa el modelo de automovil:",
+    style:
+    TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+    ),
+    const SizedBox(height: 6),
+    TextFormField(
+    decoration: const InputDecoration(
+    hintText: 'Modelo del automóvil',
+    hintStyle: TextStyle(fontSize: 14)),
+    validator: (value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, ingrese un modelo';
+    }
+    return null;
+    },
+      onSaved: (value) => _model = value!,
+    ),
+      const SizedBox(height: 24),
+      Container(
+        alignment: Alignment.centerLeft,
+        child: const Text(
+          "Ingresa el motivo:",
+          style:
+          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  const SectionHeading(
-                    title: "Detalles de la cita",
-                    showActionButton: false,
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      "Ingresa el modelo de automovil:",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  TextFormField(
-                    decoration: const InputDecoration(
-                        hintText: 'Modelo del automóvil',
-                        hintStyle: TextStyle(fontSize: 14)),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, ingrese un modelo';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) => _model = value!,
-                  ),
-                  const SizedBox(
-                    height: 24,
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      "Ingresa el motivo:",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  TextFormField(
-                    decoration: const InputDecoration(
-                        hintText: 'Motivo de la cita',
-                        hintStyle: TextStyle(fontSize: 14)),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, ingrese un motivo';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) => _reason = value!,
-                  ),
-                  const SizedBox(
-                    height: 24,
-                  ),
-                  Container(
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      "Ingresa el día y hora:",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: _selectDate,
-                          child: Text(
-                            'Fecha: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Expanded(
-                        child: TextButton(
-                          onPressed: _selectTime,
-                          child: Text(
-                            'Hora: ${_selectedTime.format(context)}',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          width: 150,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              "Cancelar",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () async {
-                          await _saveCite();
-                          //sendMail();
-                          setState(
-                              () {}); // Actualiza la pantalla después de guardar la cita
-                        },
-                        child: Container(
-                          width: 150,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF258EB4),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              "Guardar",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+      const SizedBox(height: 6),
+      TextFormField(
+        decoration: const InputDecoration(
+            hintText: 'Motivo de la cita',
+            hintStyle: TextStyle(fontSize: 14)),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Por favor, ingrese un motivo';
+          }
+          return null;
+        },
+        onSaved: (value) => _reason = value!,
+      ),
+      const SizedBox(height: 24),
+      Container(
+        alignment: Alignment.centerLeft,
+        child: const Text(
+          "Ingresa el día y hora:",
+          style:
+          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+      const SizedBox(height: 6),
+      Row(
+        children: [
+          Expanded(
+            child: TextButton(
+              onPressed: _selectDate,
+              child: Text(
+                'Fecha: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
               ),
             ),
           ),
-        ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextButton(
+              onPressed: _selectTime,
+              child: Text(
+                'Hora: ${_selectedTime.format(context)}',
+              ),
+            ),
+          ),
+        ],
       ),
+      const SizedBox(height: 30),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          InkWell(
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: Container(
+              width: 150,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(
+                child: Text(
+                  "Cancelar",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: () async {
+              await _saveCite();
+              setState(
+                      () {}); // Actualiza la pantalla después de guardar la cita
+            },
+            child: Container(
+              width: 150,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF258EB4),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(
+                child: Text(
+                  "Guardar",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ],
+    ),
+    ),
+    ),
+    ),
+    ),
     );
   }
 }
-/*Metodo para mandar correo al momento de agendar una cita*/
-/*
-class EmailSender {
-  static final gmailSmtp =
-      gmail(dotenv.env["GMAIL_EMAIL"]!, dotenv.env["GMAIL_PASSWORD"]!);
-
-  static Future<void> sendMailFromGmail(String userEmail) async {
-    final message = Message()
-      ..from = Address(dotenv.env["GMAIL_EMAIL"]!, 'MechanicTracking')
-      ..recipients.add(userEmail)
-      ..subject = 'Confirmación de cita'
-      ..html =
-          '<body style="text-align: center; font-family: Tahoma, Geneva, Verdana, sans-serif;"> <div style="margin:auto; border-radius: 10px; width: 300px; padding: 10px; box-shadow: 1px 1px 1px 1px rgb(174, 174, 174);"> <h2>Hola, se ha agendado la cita en la lista de espera del taller mecanico</h2> <p>Espere a nuevas actualizaciones para saber sobre su estatus</p></div></body>';
-
-    try {
-      final sendReport = await send(message, gmailSmtp);
-      print('Message sent: ' + sendReport.toString());
-    } on MailerException catch (e) {
-      print('Message not sent.');
-      for (var p in e.problems) {
-        print('Problem: ${p.code}: ${p.msg}');
-      }
-    }
-  }
-}
-*/

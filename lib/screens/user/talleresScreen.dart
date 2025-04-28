@@ -33,7 +33,7 @@ class TalleresScreen extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 10,
               mainAxisSpacing: 5,
-              childAspectRatio: 0.8, // Ajusta según sea necesario
+              childAspectRatio: 0.8,
             ),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
@@ -47,9 +47,9 @@ class TalleresScreen extends StatelessWidget {
                 ),
                 color: Colors.grey[200],
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch, // Para que los hijos ocupen el ancho
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded( // Permite que la imagen ocupe espacio flexible
+                    Expanded(
                       flex: 2,
                       child: ClipRRect(
                         borderRadius: const BorderRadius.only(
@@ -74,7 +74,7 @@ class TalleresScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min, // Para que la columna ocupe el mínimo espacio vertical necesario
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             data['workshopName'] ?? 'Nombre no disponible',
@@ -83,7 +83,7 @@ class TalleresScreen extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 2, // Permitimos hasta 2 líneas para el nombre
+                            maxLines: 2,
                           ),
                           const SizedBox(height: 2),
                           Row(
@@ -103,7 +103,7 @@ class TalleresScreen extends StatelessWidget {
                                     color: Colors.grey,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 2, // Permitimos hasta 2 líneas para la dirección
+                                  maxLines: 2,
                                 ),
                               ),
                             ],
@@ -126,7 +126,10 @@ class TalleresScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => const CiteForm()),
+                                    builder: (context) => CiteForm(
+                                      workshopData: data, // Pasar los datos del taller
+                                    ),
+                                  ),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
