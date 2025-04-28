@@ -63,7 +63,15 @@ class _CiteFormState extends State<CiteForm> {
       });
     }
   }
-
+  Future<String> getUserEmail(String userId) async {
+    var userDoc =
+    await FirebaseFirestore.instance.collection('client').doc(userId).get();
+    if (userDoc.exists) {
+      return userDoc.data()!['email'];
+    } else {
+      return '';
+    }
+  }
   void _selectTime() async {
     final TimeOfDay? newTime = await showTimePicker(
       context: context,
@@ -142,15 +150,63 @@ class _CiteFormState extends State<CiteForm> {
         _selectedTime.minute,
       );
 
+      // Verificar si ya existe una cita en la misma fecha y hora
+      QuerySnapshot existingAppointments = await FirebaseFirestore.instance
+          .collection('citas')
+          .where('date', isEqualTo: dateTime)
+          .get();
+
+      if (existingAppointments.docs.isNotEmpty) {
+        // Mostrar alerta si ya hay una cita en ese horario
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Cita no disponible'),
+              content: const Text('Ya existe una cita agendada en esta fecha y hora. Por favor, elige otro horario.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Aceptar'),
+                ),
+              ],
+            );
+          },
+        );
+        return; // Detener el proceso de guardado
+      }
+      DocumentReference appointmentRef =
       await FirebaseFirestore.instance.collection('citas').add({
         'userId': userId,
         'automovil': _model,
         'date': dateTime,
         'motivo': _reason,
         'status': 'Pendiente',
+        'status2': 'Pendiente',
+        'reason': 'Evaluando proceso',
+        'reason2': 'Evaluando proceso',
+        'progreso': 'Pendiente de evaluar',
         'workshopName': workshopName ?? _workshopNameController.text,
         'workshopAddress': workshopAddress ?? _workshopAddressController.text,
+        'progreso2': '',
+        'date_update': dateTime,
+        'costo': "",
+        'idMecanico': "",
+        'descriptionService': "",
       });
+      await appointmentRef.collection('citasDiagnostico').doc('Aceptado').set({
+        'progreso2': "",
+        'date_update': dateTime,
+        'reason2': "",
+        'costo': "",
+        'descriptionService': "",
+        'status2': '',
+      }, SetOptions(merge: true));
+
+      // Obtener el email del usuario
+      String userEmail = await getUserEmail(userId);
 
       Navigator.pushReplacement(
         context,
