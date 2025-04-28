@@ -1,3 +1,4 @@
+import 'package:fimech/screens/user/talleresScreen.dart';
 import 'package:flutter/material.dart';
 //import 'package:fimech/screens/user/chat.dart';
 //import 'package:fimech/screens/user/feed.dart'; // Importando la pantalla de alimentación
@@ -14,8 +15,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int selectedIndex =
-      0; // Índice del elemento seleccionado en la barra de navegación inferior
+  int selectedIndex = 0; // Índice del elemento seleccionado en la barra de navegación inferior
 
   @override
   Widget build(BuildContext context) {
@@ -23,14 +23,15 @@ class _HomePageState extends State<HomePage> {
       // Lista de las pantallas a mostrar
       //   FeedPage(),
       SchedulePage(),
+      TalleresScreen(),
       TrackingPage(),
       //ChatPage(),
       ProfilePage2()
+
     ];
 
-    Color selectedColor = Color(0xFF258EB4)!; // Color del elemento seleccionado en la barra de navegación inferior
-    Color unselectedColor = Colors.grey[
-        600]!; // Color del elemento no seleccionado en la barra de navegación inferior
+    Color selectedColor = const Color(0xFF258EB4); // Color del elemento seleccionado en la barra de navegación inferior
+    Color unselectedColor = Colors.grey[600]!; // Color del elemento no seleccionado en la barra de navegación inferior
 
     return Scaffold(
       // Crea una nueva instancia de la clase Scaffold
@@ -50,10 +51,8 @@ class _HomePageState extends State<HomePage> {
         },
         elevation: 10, // Sombra del elemento
         selectedItemColor: selectedColor, // Color del elemento seleccionado
-        unselectedItemColor:
-            unselectedColor, // Color del elemento no seleccionado
-        backgroundColor: Colors.white
-            .withOpacity(1), // Fondo de la barra de navegación inferior
+        unselectedItemColor: unselectedColor, // Color del elemento no seleccionado
+        backgroundColor: Colors.white.withOpacity(1), // Fondo de la barra de navegación inferior
         items: const <BottomNavigationBarItem>[
           //Elementos de la barra de navegación inferior
           // BottomNavigationBarItem(
@@ -63,6 +62,10 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month), // Icono del elemento
             label: 'Citas', // Etiqueta del elemento
+          ),
+          BottomNavigationBarItem( // Nuevo ítem para Talleres
+            icon: Icon(Icons.store), // Puedes elegir otro icono como Icons.workspaces_outlined
+            label: 'Talleres',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.content_paste_search), // Icono del elemento
