@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fimech/services/appointment_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fimech/screens/user/home.dart';
@@ -15,21 +16,37 @@ class CiteForm extends StatefulWidget {
 
 class _CiteFormState extends State<CiteForm> {
   late String userId;
-  String? workshopName;
+  String? selectedWorkshopName;
   String? workshopAddress;
-  final TextEditingController _workshopNameController = TextEditingController();
   final TextEditingController _workshopAddressController =
   TextEditingController();
+  List<Map<String, dynamic>> workshops = [];
 
   @override
   void initState() {
     super.initState();
     getUserId();
+    _loadWorkshops();
     if (widget.workshopData != null) {
-      workshopName = widget.workshopData!['workshopName'];
+      selectedWorkshopName = widget.workshopData!['workshopName'];
       workshopAddress = widget.workshopData!['workshopAddress'];
-      _workshopNameController.text = workshopName ?? '';
       _workshopAddressController.text = workshopAddress ?? '';
+    }
+  }
+
+  Future<void> _loadWorkshops() async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot =
+      await FirebaseFirestore.instance
+          .collection('admin')
+          .where('isMechanic', isEqualTo: true)
+          .get();
+      setState(() {
+        workshops = snapshot.docs.map((doc) => doc.data()).toList();
+      });
+    } catch (e) {
+      print("Error loading workshops: $e");
+      // Handle error appropriately
     }
   }
 
@@ -43,7 +60,7 @@ class _CiteFormState extends State<CiteForm> {
       userId = '';
     }
   }
-
+  // Estado de la cita
   final _formKey = GlobalKey<FormState>();
   String _model = '';
   String _reason = '';
@@ -63,6 +80,7 @@ class _CiteFormState extends State<CiteForm> {
       });
     }
   }
+
   Future<String> getUserEmail(String userId) async {
     var userDoc =
     await FirebaseFirestore.instance.collection('client').doc(userId).get();
@@ -72,6 +90,7 @@ class _CiteFormState extends State<CiteForm> {
       return '';
     }
   }
+
   void _selectTime() async {
     final TimeOfDay? newTime = await showTimePicker(
       context: context,
@@ -87,6 +106,7 @@ class _CiteFormState extends State<CiteForm> {
         newTime.minute,
       );
 
+      // Verificar si la hora seleccionada está dentro del rango permitido
       final TimeOfDay startTime = const TimeOfDay(hour: 9, minute: 0);
       final TimeOfDay endTime = const TimeOfDay(hour: 17, minute: 0);
 
@@ -118,6 +138,7 @@ class _CiteFormState extends State<CiteForm> {
     }
   }
 
+  //Configuración de limite de agendar hora
   bool _isTimeInRange(TimeOfDay time, TimeOfDay startTime, TimeOfDay endTime) {
     final int hour = time.hour;
     final int minute = time.minute;
@@ -137,6 +158,12 @@ class _CiteFormState extends State<CiteForm> {
     }
 
     return true;
+  }
+
+  Future<String> IdCiti(String userId) async {
+    var citiId =
+    await AppointmentService().getAppointmentTraking(userId, "Pendiente");
+    return citiId.id;
   }
 
   Future<void> _saveCite() async {
@@ -177,6 +204,8 @@ class _CiteFormState extends State<CiteForm> {
         );
         return; // Detener el proceso de guardado
       }
+
+      // Si no hay citas en esa fecha y hora, proceder con la creación
       DocumentReference appointmentRef =
       await FirebaseFirestore.instance.collection('citas').add({
         'userId': userId,
@@ -184,18 +213,19 @@ class _CiteFormState extends State<CiteForm> {
         'date': dateTime,
         'motivo': _reason,
         'status': 'Pendiente',
+        'workshopName': selectedWorkshopName,
+        'workshopAddress': _workshopAddressController.text,
         'status2': 'Pendiente',
         'reason': 'Evaluando proceso',
         'reason2': 'Evaluando proceso',
         'progreso': 'Pendiente de evaluar',
-        'workshopName': workshopName ?? _workshopNameController.text,
-        'workshopAddress': workshopAddress ?? _workshopAddressController.text,
         'progreso2': '',
         'date_update': dateTime,
         'costo': "",
         'idMecanico': "",
         'descriptionService': "",
       });
+
       await appointmentRef.collection('citasDiagnostico').doc('Aceptado').set({
         'progreso2': "",
         'date_update': dateTime,
@@ -226,117 +256,96 @@ class _CiteFormState extends State<CiteForm> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-        title: const Text(
-        'Agendar Cita',
-        style: TextStyle(fontWeight: FontWeight.bold),
-    ),
-    ),
-    body: SafeArea(
-    child: SingleChildScrollView(
-    child: Padding(
-    padding: const EdgeInsets.all(24),
+          title: const Text(
+            'Agendar Cita',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        body: SafeArea(
+        child: SingleChildScrollView(
+        child: Padding(
+        padding: const EdgeInsets.all(24),
     child: Form(
     key: _formKey,
     child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
     const SectionHeading(
     title: "Detalles de la cita",
     showActionButton: false,
     ),
     const SizedBox(height: 30),
-    if (workshopName != null)
-    Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
     const Text(
     "Taller seleccionado:",
-    style: TextStyle(
-    fontSize: 16, fontWeight: FontWeight.bold),
+    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
     ),
     const SizedBox(height: 6),
-    Text(
-    workshopName!,
-    style: const TextStyle(fontSize: 14),
-    ),
-    const SizedBox(height: 12),
-    const Text(
-    "Dirección del taller:",
-    style: TextStyle(
-    fontSize: 16, fontWeight: FontWeight.bold),
-    ),
-    const SizedBox(height: 6),
-    Text(
-    workshopAddress!,
-    style: const TextStyle(fontSize: 14),
-    ),
-    const SizedBox(height: 24),
-    ],
-    )
-    else
-    Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    const Text(
-    "Nombre del taller:",
-    style: TextStyle(
-    fontSize: 16, fontWeight: FontWeight.bold),
-    ),
-    const SizedBox(height: 6),
-    TextFormField(
-    controller: _workshopNameController,
+    DropdownButtonFormField<String>(
     decoration: const InputDecoration(
-    hintText: 'Ingrese el nombre del taller',
-    hintStyle: TextStyle(fontSize: 14)),
+    hintText: 'Seleccione un taller',
+    border: OutlineInputBorder(),
+    ),
+    value: selectedWorkshopName,
+    items: workshops.map((workshop) {
+    return DropdownMenuItem<String>(
+    value: workshop['workshopName'],
+    child: Text(workshop['workshopName'] ?? 'Nombre no disponible'),
+    );
+    }).toList(),
+    onChanged: (String? newValue) {
+    setState(() {
+    selectedWorkshopName = newValue;
+    workshopAddress = workshops.firstWhere(
+    (workshop) => workshop['workshopName'] == newValue,
+    orElse: () => {},
+    )['workshopAddress'];
+    _workshopAddressController.text = workshopAddress ?? '';
+    });
+    },
     validator: (value) {
-    if (value == null || value.isEmpty) {
-    return 'Por favor, ingrese el nombre del taller';
+    if(value == null || value.isEmpty) {
+      return 'Por favor, seleccione un taller';
     }
     return null;
     },
     ),
-    const SizedBox(height: 24),
-    const Text(
-    "Dirección del taller:",
-    style: TextStyle(
-    fontSize: 16, fontWeight: FontWeight.bold),
-    ),
-    const SizedBox(height: 6),
-    TextFormField(
-    controller: _workshopAddressController,
-    decoration: const InputDecoration(
-    hintText: 'Ingrese la dirección del taller',
-    hintStyle: TextStyle(fontSize: 14)),
-    validator: (value) {
-    if (value == null || value.isEmpty) {
-    return 'Por favor, ingrese la dirección del taller';
-    }
-    return null;
-    },
-    ),
-    const SizedBox(height: 24),
-    ],
-    ),
-    Container(
-    alignment: Alignment.centerLeft,
-    child: const Text(
-    "Ingresa el modelo de automovil:",
-    style:
-    TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-    ),
-    ),
-    const SizedBox(height: 6),
-    TextFormField(
-    decoration: const InputDecoration(
-    hintText: 'Modelo del automóvil',
-    hintStyle: TextStyle(fontSize: 14)),
-    validator: (value) {
-    if (value == null || value.isEmpty) {
-      return 'Por favor, ingrese un modelo';
-    }
-    return null;
-    },
-      onSaved: (value) => _model = value!,
-    ),
+      const SizedBox(height: 24),
+      const Text(
+        "Dirección del taller:",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 6),
+      TextFormField(
+        controller: _workshopAddressController,
+        readOnly: true, // La dirección se rellena automáticamente
+        decoration: const InputDecoration(
+          hintText: 'La dirección del taller se mostrará aquí',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      const SizedBox(height: 24),
+      Container(
+        alignment: Alignment.centerLeft,
+        child: const Text(
+          "Ingresa el modelo de automovil:",
+          style:
+          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+      const SizedBox(height: 6),
+      TextFormField(
+        decoration: const InputDecoration(
+            hintText: 'Modelo del automóvil',
+            border: OutlineInputBorder(),
+            hintStyle: TextStyle(fontSize: 14)),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Por favor, ingrese un modelo';
+          }
+          return null;
+        },
+        onSaved: (value) => _model = value!,
+      ),
       const SizedBox(height: 24),
       Container(
         alignment: Alignment.centerLeft,
@@ -350,6 +359,7 @@ class _CiteFormState extends State<CiteForm> {
       TextFormField(
         decoration: const InputDecoration(
             hintText: 'Motivo de la cita',
+            border: OutlineInputBorder(),
             hintStyle: TextStyle(fontSize: 14)),
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -420,8 +430,7 @@ class _CiteFormState extends State<CiteForm> {
           InkWell(
             onTap: () async {
               await _saveCite();
-              setState(
-                      () {}); // Actualiza la pantalla después de guardar la cita
+              setState(() {}); // Actualiza la pantalla después de guardar la cita
             },
             child: Container(
               width: 150,
@@ -447,9 +456,9 @@ class _CiteFormState extends State<CiteForm> {
     ],
     ),
     ),
-    ),
-    ),
-    ),
+        ),
+        ),
+        ),
     );
   }
 }
