@@ -49,8 +49,8 @@ class Appointment {
       json['reason2'] as String,
       json['userId'] as String,
       json['idMecanico'] as String,
-      json['workshopAddress'] as String,
       json['workshopName'] as String,
+      json['workshopAddress'] as String,
     );
   }
   toJson() {
