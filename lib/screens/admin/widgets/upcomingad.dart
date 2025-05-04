@@ -16,6 +16,7 @@ class UpcomingScheduleAD extends StatefulWidget {
 
 class _UpcomingScheduleADState extends State<UpcomingScheduleAD> {
   late String userId;
+
   @override
   void initState() {
     super.initState();
@@ -33,10 +34,29 @@ class _UpcomingScheduleADState extends State<UpcomingScheduleAD> {
     }
   }
 
+  Future<List<Appointment>> _fetchPendingAppointmentsForMechanic(
+      String mechanicId) async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+          .instance
+          .collection('citas')
+          .where('idMecanico', isEqualTo: mechanicId)
+          .where('status', isEqualTo: 'Pendiente')
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return Appointment.fromJson(doc.id, doc.data()!);
+      }).toList();
+    } catch (e) {
+      print("Error fetching pending appointments for mechanic: $e");
+      return []; // Devolver una lista vacía en caso de error
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Appointment>>(
-      future: AppointmentService().getAllAppointments(userId, "Pendiente"),
+      future: _fetchPendingAppointmentsForMechanic(userId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -57,45 +77,15 @@ class _UpcomingScheduleADState extends State<UpcomingScheduleAD> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                appointments.length > 0
+                appointments.isNotEmpty
                     ? SingleChildScrollView(
-                        child: Column(
-                          children: appointments.map((appointment) {
-                            return CardAppointment(appointment.id, appointment);
-                          }).toList(),
-                        ),
-                      )
-                    : Column(children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Container(
-                            width: MediaQuery.of(context).size.width,
-                            height: 45,
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Aún no tiene citas próximas",
-                                  style: TextStyle(color: Colors.black54),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      ]),
+                  child: Column(
+                    children: appointments.map((appointment) {
+                      return CardAppointment(appointment.id, appointment);
+                    }).toList(),
+                  ),
+                )
+                    : const _NoAppointmentsMessage(),
                 const SizedBox(
                   height: 20,
                 ),
@@ -108,15 +98,50 @@ class _UpcomingScheduleADState extends State<UpcomingScheduleAD> {
   }
 }
 
+class _NoAppointmentsMessage extends StatelessWidget {
+  const _NoAppointmentsMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        height: 45,
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              "Aún no tiene citas próximas",
+              style: TextStyle(color: Colors.black54),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class CardAppointment extends StatefulWidget {
   final String appointmentId;
   final Appointment appointment_1;
   const CardAppointment(this.appointmentId, this.appointment_1, {super.key});
 
   @override
-  State<StatefulWidget> createState() {
-    return _CardAppointmentState();
-  }
+  State<StatefulWidget> createState() => _CardAppointmentState();
 }
 
 class _CardAppointmentState extends State<CardAppointment> {
@@ -134,8 +159,6 @@ class _CardAppointmentState extends State<CardAppointment> {
       _appointment = appointment;
     });
   }
-
-  void setAppointment(Appointment appointment) {}
 
   Future<void> _cancelCite() async {
     await FirebaseFirestore.instance
@@ -302,14 +325,7 @@ class _CardAppointmentState extends State<CardAppointment> {
         ),
       );
     } else {
-      return const Column(
-        children: [
-          Text(
-            "No tiene citas pendientes",
-            style: TextStyle(color: Colors.black54),
-          )
-        ],
-      );
+      return const _NoAppointmentsMessage();
     }
   }
 

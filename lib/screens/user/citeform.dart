@@ -18,6 +18,7 @@ class _CiteFormState extends State<CiteForm> {
   late String userId;
   String? selectedWorkshopName;
   String? workshopAddress;
+  String? _mechanicId; // Usamos un guion bajo para indicar que es privado
   final TextEditingController _workshopAddressController =
   TextEditingController();
   List<Map<String, dynamic>> workshops = [];
@@ -30,14 +31,15 @@ class _CiteFormState extends State<CiteForm> {
     if (widget.workshopData != null) {
       selectedWorkshopName = widget.workshopData!['workshopName'];
       workshopAddress = widget.workshopData!['workshopAddress'];
+      _mechanicId = widget.workshopData!['uid']; // Obtener el ID del mecánico si se pasa
       _workshopAddressController.text = workshopAddress ?? '';
     }
   }
 
   Future<void> _loadWorkshops() async {
     try {
-      QuerySnapshot<Map<String, dynamic>> snapshot =
-      await FirebaseFirestore.instance
+      QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+          .instance
           .collection('admin')
           .where('isMechanic', isEqualTo: true)
           .get();
@@ -60,6 +62,7 @@ class _CiteFormState extends State<CiteForm> {
       userId = '';
     }
   }
+
   // Estado de la cita
   final _formKey = GlobalKey<FormState>();
   String _model = '';
@@ -177,6 +180,40 @@ class _CiteFormState extends State<CiteForm> {
         _selectedTime.minute,
       );
 
+      // Obtener el ID del mecánico aquí de forma síncrona
+      if (selectedWorkshopName != null) {
+        QuerySnapshot snapshot = await FirebaseFirestore.instance
+            .collection('admin')
+            .where('isMechanic', isEqualTo: true)
+            .where('workshopName', isEqualTo: selectedWorkshopName)
+            .get();
+
+        if (snapshot.docs.isNotEmpty) {
+          _mechanicId = snapshot.docs.first.id;
+          print('ID del mecánico seleccionado: $_mechanicId');
+        } else {
+          _mechanicId = null;
+          print('No se encontró ningún mecánico con el nombre: $selectedWorkshopName');
+          // Puedes mostrar un error al usuario si no se encuentra el mecánico
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: No se pudo encontrar el mecánico seleccionado.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return; // Detener el proceso de guardado si no se encuentra el mecánico
+        }
+      } else {
+        // Si no se ha seleccionado ningún taller, también detener el proceso
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor, seleccione un taller.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       // Verificar si ya existe una cita en la misma fecha y hora
       QuerySnapshot existingAppointments = await FirebaseFirestore.instance
           .collection('citas')
@@ -190,7 +227,8 @@ class _CiteFormState extends State<CiteForm> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Cita no disponible'),
-              content: const Text('Ya existe una cita agendada en esta fecha y hora. Por favor, elige otro horario.'),
+              content: const Text(
+                  'Ya existe una cita agendada en esta fecha y hora. Por favor, elige otro horario.'),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
@@ -222,7 +260,7 @@ class _CiteFormState extends State<CiteForm> {
         'progreso2': '',
         'date_update': dateTime,
         'costo': "",
-        'idMecanico': "",
+        'idMecanico': _mechanicId, // Usar el _mechanicId obtenido
         'descriptionService': "",
       });
 
@@ -255,210 +293,214 @@ class _CiteFormState extends State<CiteForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Agendar Cita',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+      appBar: AppBar(
+        title: const Text(
+          'Agendar Cita',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        body: SafeArea(
+      ),
+      body: SafeArea(
         child: SingleChildScrollView(
-        child: Padding(
-        padding: const EdgeInsets.all(24),
-    child: Form(
-    key: _formKey,
-    child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    const SectionHeading(
-    title: "Detalles de la cita",
-    showActionButton: false,
-    ),
-    const SizedBox(height: 30),
-    const Text(
-    "Taller seleccionado:",
-    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-    ),
-    const SizedBox(height: 6),
-    DropdownButtonFormField<String>(
-    decoration: const InputDecoration(
-    hintText: 'Seleccione un taller',
-    border: OutlineInputBorder(),
-    ),
-    value: selectedWorkshopName,
-    items: workshops.map((workshop) {
-    return DropdownMenuItem<String>(
-    value: workshop['workshopName'],
-    child: Text(workshop['workshopName'] ?? 'Nombre no disponible'),
-    );
-    }).toList(),
-    onChanged: (String? newValue) {
-    setState(() {
-    selectedWorkshopName = newValue;
-    workshopAddress = workshops.firstWhere(
-    (workshop) => workshop['workshopName'] == newValue,
-    orElse: () => {},
-    )['workshopAddress'];
-    _workshopAddressController.text = workshopAddress ?? '';
-    });
-    },
-    validator: (value) {
-    if(value == null || value.isEmpty) {
-      return 'Por favor, seleccione un taller';
-    }
-    return null;
-    },
-    ),
-      const SizedBox(height: 24),
-      const Text(
-        "Dirección del taller:",
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      const SizedBox(height: 6),
-      TextFormField(
-        controller: _workshopAddressController,
-        readOnly: true, // La dirección se rellena automáticamente
-        decoration: const InputDecoration(
-          hintText: 'La dirección del taller se mostrará aquí',
-          border: OutlineInputBorder(),
-        ),
-      ),
-      const SizedBox(height: 24),
-      Container(
-        alignment: Alignment.centerLeft,
-        child: const Text(
-          "Ingresa el modelo de automovil:",
-          style:
-          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ),
-      const SizedBox(height: 6),
-      TextFormField(
-        decoration: const InputDecoration(
-            hintText: 'Modelo del automóvil',
-            border: OutlineInputBorder(),
-            hintStyle: TextStyle(fontSize: 14)),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Por favor, ingrese un modelo';
-          }
-          return null;
-        },
-        onSaved: (value) => _model = value!,
-      ),
-      const SizedBox(height: 24),
-      Container(
-        alignment: Alignment.centerLeft,
-        child: const Text(
-          "Ingresa el motivo:",
-          style:
-          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ),
-      const SizedBox(height: 6),
-      TextFormField(
-        decoration: const InputDecoration(
-            hintText: 'Motivo de la cita',
-            border: OutlineInputBorder(),
-            hintStyle: TextStyle(fontSize: 14)),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Por favor, ingrese un motivo';
-          }
-          return null;
-        },
-        onSaved: (value) => _reason = value!,
-      ),
-      const SizedBox(height: 24),
-      Container(
-        alignment: Alignment.centerLeft,
-        child: const Text(
-          "Ingresa el día y hora:",
-          style:
-          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ),
-      const SizedBox(height: 6),
-      Row(
-        children: [
-          Expanded(
-            child: TextButton(
-              onPressed: _selectDate,
-              child: Text(
-                'Fecha: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextButton(
-              onPressed: _selectTime,
-              child: Text(
-                'Hora: ${_selectedTime.format(context)}',
-              ),
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 30),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          InkWell(
-            onTap: () {
-              Navigator.pop(context);
-            },
-            child: Container(
-              width: 150,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                child: Text(
-                  "Cancelar",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionHeading(
+                    title: "Detalles de la cita",
+                    showActionButton: false,
                   ),
-                ),
-              ),
-            ),
-          ),
-          InkWell(
-            onTap: () async {
-              await _saveCite();
-              setState(() {}); // Actualiza la pantalla después de guardar la cita
-            },
-            child: Container(
-              width: 150,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF258EB4),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                child: Text(
-                  "Guardar",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                  const SizedBox(height: 30),
+                  const Text(
+                    "Taller seleccionado:",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      hintText: 'Seleccione un taller',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: selectedWorkshopName,
+                    items: workshops.map((workshop) {
+                      return DropdownMenuItem<String>(
+                        value: workshop['workshopName'],
+                        child: Text(
+                            workshop['workshopName'] ?? 'Nombre no disponible'),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedWorkshopName = newValue;
+                        workshopAddress = workshops.firstWhere(
+                              (workshop) => workshop['workshopName'] == newValue,
+                          orElse: () => {},
+                        )['workshopAddress'];
+                        _workshopAddressController.text = workshopAddress ?? '';
+                        _mechanicId = null; // Resetear el ID del mecánico al cambiar de taller
+                      });
+                      // Ya no necesitas la consulta aquí, se realizará en _saveCite
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, seleccione un taller';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Dirección del taller:",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _workshopAddressController,
+                    readOnly: true, // La dirección se rellena automáticamente
+                    decoration: const InputDecoration(
+                      hintText: 'La dirección del taller se mostrará aquí',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      "Ingresa el modelo de automovil:",
+                      style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                        hintText: 'Modelo del automóvil',
+                        border: OutlineInputBorder(),
+                        hintStyle: TextStyle(fontSize: 14)),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingrese un modelo';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _model = value!,
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      "Ingresa el motivo:",
+                      style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                        hintText: 'Motivo de la cita',
+                        border: OutlineInputBorder(),
+                        hintStyle: TextStyle(fontSize: 14)),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingrese un motivo';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _reason = value!,
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      "Ingresa el día y hora:",
+                      style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: _selectDate,
+                          child: Text(
+                            'Fecha: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: _selectTime,
+                          child: Text(
+                            'Hora: ${_selectedTime.format(context)}',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: 150,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              "Cancelar",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () async {
+                          await _saveCite();
+                          setState(
+                                  () {}); // Actualiza la pantalla después de guardar la cita
+                        },
+                        child: Container(
+                          width: 150,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF258EB4),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              "Guardar",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
-    ],
-    ),
-    ),
-        ),
-        ),
-        ),
     );
   }
 }

@@ -31,10 +31,22 @@ class _CancelledScheduleADState extends State<CancelledScheduleAD> {
     }
   }
 
+  Future<List<Appointment>> _fetchCancelledAppointmentsForMechanic(
+      String mechanicId) async {
+    try {
+      final appointments = await AppointmentService()
+          .getAllAppointments(mechanicId, "Cancelado");
+      return appointments;
+    } catch (e) {
+      print("Error fetching cancelled appointments: $e");
+      return [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Appointment>>(
-      future: AppointmentService().getAllAppointments(userId, "Cancelado"),
+      future: _fetchCancelledAppointmentsForMechanic(userId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -55,45 +67,15 @@ class _CancelledScheduleADState extends State<CancelledScheduleAD> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                appointments.length > 0
+                appointments.isNotEmpty
                     ? SingleChildScrollView(
-                        child: Column(
-                          children: appointments.map((appointment) {
-                            return CardAppointment(appointment.id, appointment);
-                          }).toList(),
-                        ),
-                      )
-                    : Column(children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Container(
-                            width: MediaQuery.of(context).size.width,
-                            height: 45,
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Aún no tiene servicios cancelados",
-                                  style: TextStyle(color: Colors.black54),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      ]),
+                  child: Column(
+                    children: appointments.map((appointment) {
+                      return CardAppointment(appointment.id, appointment);
+                    }).toList(),
+                  ),
+                )
+                    : const _NoCancelledAppointmentsMessage(),
                 const SizedBox(
                   height: 20,
                 ),
@@ -102,6 +84,43 @@ class _CancelledScheduleADState extends State<CancelledScheduleAD> {
           );
         }
       },
+    );
+  }
+}
+
+class _NoCancelledAppointmentsMessage extends StatelessWidget {
+  const _NoCancelledAppointmentsMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        height: 45,
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              "Aún no tiene servicios cancelados",
+              style: TextStyle(color: Colors.black54),
+            )
+          ],
+        ),
+      ),
     );
   }
 }
@@ -257,31 +276,7 @@ class _CardAppointmentState extends State<CardAppointment> {
         ),
       );
     } else {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: const Column(
-            children: [
-              Text(
-                "Aún no tiene citas canceladas",
-                style: TextStyle(color: Colors.black54),
-              )
-            ],
-          ),
-        ),
-      );
+      return const SizedBox.shrink(); // No mostrar nada si no está cancelado
     }
   }
 

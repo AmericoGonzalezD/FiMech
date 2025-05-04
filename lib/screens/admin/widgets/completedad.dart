@@ -32,6 +32,7 @@ class _CompletedScheduleADState extends State<CompletedScheduleAD> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Appointment>>(

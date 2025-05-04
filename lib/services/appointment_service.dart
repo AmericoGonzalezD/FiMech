@@ -78,7 +78,7 @@ class AppointmentService {
 
   Future<List<Appointment>> getAllAppointments(
       String userId, String status) async {
-    var result = await appointmentRef.where('status', isEqualTo: status).get();
+    var result = await appointmentRef.where('idMecanico', isEqualTo: userId).where('status', isEqualTo: status).get();
 
     List<Appointment> appointments = [];
     for (var doc in result.docs) {
