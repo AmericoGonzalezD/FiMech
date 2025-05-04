@@ -272,6 +272,36 @@ class _CiteFormState extends State<CiteForm> {
         'descriptionService': "",
         'status2': '',
       }, SetOptions(merge: true));
+      await appointmentRef
+          .collection('citasDiagnostico')
+          .doc('Completado')
+          .set({
+        'progreso2': "",
+        'date_update': dateTime,
+        'reason2': "",
+        'costo': "",
+        'descriptionService': "",
+        'status2': '',
+      }, SetOptions(merge: true));
+      await appointmentRef
+          .collection('citasDiagnostico')
+          .doc('Reparacion')
+          .set({
+        'progreso2': "",
+        'date_update': dateTime,
+        'reason2': "",
+        'costo': "",
+        'descriptionService': "",
+        'status2': '',
+      }, SetOptions(merge: true));
+      await appointmentRef.collection('citasDiagnostico').doc('Revision').set({
+        'progreso2': "",
+        'date_update': dateTime,
+        'reason2': "",
+        'costo': "",
+        'descriptionService': "",
+        'status2': '',
+      }, SetOptions(merge: true));
 
       // Obtener el email del usuario
       String userEmail = await getUserEmail(userId);
