@@ -179,6 +179,63 @@ class _ScheduleDetailsPageADState extends State<ScheduleDetailsPageAD> {
                   Expanded(
                     flex: 3,
                     child: Text(
+                      "Taller Mecánico:",
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.visible,
+                    ),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: Text(
+                      maxLines: 20,
+                      widget._appointment.workshopName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.black54),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(
+                height: 14,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      "Dirección del taller:",
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.visible,
+                    ),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: Text(
+                      maxLines: 20,
+                      widget._appointment.workshopAddress,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.black54),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
                       "Estado:",
                       style: Theme.of(context)
                           .textTheme
