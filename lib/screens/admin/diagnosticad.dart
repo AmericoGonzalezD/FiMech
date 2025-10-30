@@ -85,12 +85,14 @@ class _DiagnosticPageADState extends State<DiagnosticPageAD> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      bottomNavigationBar: (userPhoneNumber == null || userPhoneNumber!.isEmpty)
+      bottomNavigationBar: userPhoneNumber == null
           ? const SizedBox(
               height: 60,
               child: Center(child: CircularProgressIndicator()),
             )
-          : WhatsappButtonAD(widget._appointment.id, widget._appointment.auto, userPhoneNumber!),
+          : (userPhoneNumber!.isEmpty
+              ? const SizedBox.shrink()
+              : WhatsappButtonAD(widget._appointment.id, widget._appointment.auto, userPhoneNumber!)),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),

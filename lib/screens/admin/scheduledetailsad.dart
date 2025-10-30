@@ -26,6 +26,8 @@ class _ScheduleDetailsPageADState extends State<ScheduleDetailsPageAD> {
     // Inicializar valores locales del taller (para poder actualizar en la UI cuando se cambia)
     _currentWorkshopName = widget._appointment.workshopName;
     _currentWorkshopAddress = widget._appointment.workshopAddress;
+    // Inicializar estado local con el estado actual de la cita
+    _currentStatus = widget._appointment.status;
     // Inicializar fecha actual local para permitir cambios y refrescar la UI
     _currentDate = widget._appointment.date;
   }
@@ -35,6 +37,8 @@ class _ScheduleDetailsPageADState extends State<ScheduleDetailsPageAD> {
   // Valores locales para mostrar el taller actual y permitir actualizar la UI
   late String _currentWorkshopName;
   late String _currentWorkshopAddress;
+  // Estado local para reflejar cambios en la UI sin reconstruir el widget padre
+  late String _currentStatus;
   // Fecha local que se mostrará y actualizará cuando el admin cambie la fecha
   late DateTime _currentDate;
 
@@ -188,6 +192,38 @@ class _ScheduleDetailsPageADState extends State<ScheduleDetailsPageAD> {
     }
   }
 
+  // Actualizar el estado de la cita (Pendiente / Completado / Cancelado)
+  Future<void> _updateStatus(String newStatus) async {
+    try {
+      await FirebaseFirestore.instance.collection('citas').doc(widget._appointment.id).update({
+        'status': newStatus,
+        'status2': newStatus,
+        'date_update': DateTime.now(),
+      });
+
+      setState(() {
+        _currentStatus = newStatus;
+      });
+
+      // Mostrar snackbar con color según estado
+      Color bg = Colors.blueGrey;
+      if (newStatus == 'Completado') bg = Colors.green;
+      if (newStatus == 'Cancelado') bg = Colors.red;
+      if (newStatus == 'Pendiente') bg = Colors.orange;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Estado actualizado a "$newStatus"'),
+          backgroundColor: bg,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al actualizar estado: $e')),
+      );
+    }
+  }
+
   // Abre un modal con la lista de talleres para seleccionar
   Future<void> _showChangeWorkshopDialog() async {
     // Cargar talleres antes de mostrar el modal (si no están cargados)
@@ -244,12 +280,14 @@ class _ScheduleDetailsPageADState extends State<ScheduleDetailsPageAD> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      bottomNavigationBar: (userPhoneNumber == null || userPhoneNumber!.isEmpty)
+      bottomNavigationBar: userPhoneNumber == null
           ? const SizedBox(
               height: 60,
-              child: Center(child: CircularProgressIndicator()),
+
             )
-          : WhatsappButtonAD(widget._appointment.id, widget._appointment.auto, userPhoneNumber!),
+          : (userPhoneNumber!.isEmpty
+              ? const SizedBox.shrink()
+              : WhatsappButtonAD(widget._appointment.id, widget._appointment.auto, userPhoneNumber!)),
       body: SafeArea(
           child: SingleChildScrollView(
         child: Padding(
@@ -460,7 +498,7 @@ class _ScheduleDetailsPageADState extends State<ScheduleDetailsPageAD> {
                     flex: 5,
                     child: Text(
                       maxLines: 2,
-                      widget._appointment.status,
+                      _currentStatus,
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -504,8 +542,52 @@ class _ScheduleDetailsPageADState extends State<ScheduleDetailsPageAD> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
               ],
+              // Botón para que el admin actualice el estado manualmente
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.edit_calendar, color: Colors.black),
+                  label: const Text('Actualizar estado', style: TextStyle(color: Colors.black)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[300],
+                  ),
+                  onPressed: () async {
+                    final choice = await showModalBottomSheet<String>(
+                      context: context,
+                      builder: (context) {
+                        return SafeArea(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.pending_actions),
+                                title: const Text('Pendiente'),
+                                onTap: () => Navigator.of(context).pop('Pendiente'),
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.check_circle),
+                                title: const Text('Completado'),
+                                onTap: () => Navigator.of(context).pop('Completado'),
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.cancel),
+                                title: const Text('Cancelado'),
+                                onTap: () => Navigator.of(context).pop('Cancelado'),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                    if (choice != null && choice.isNotEmpty) {
+                      await _updateStatus(choice);
+                    }
+                  },
+                ),
+              ),
 
             ],
           ),

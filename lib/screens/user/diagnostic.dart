@@ -75,12 +75,17 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
       // ignore
     }
 
+    // Mostrar snackbar rojo de rechazo y esperar antes de navegar
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('La cotización se ha rechazado correctamente'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
       ),
     );
     setState(() {});
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -134,12 +139,17 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
     EmailSender.sendMailFromGmailMecanico(
         userEmailMecanico, widget._appointment.auto);
     //EmailSender.sendMailFromGmailDiagnostico(userEmailMecanico);
+    // Mostrar snackbar verde de aceptación y esperar antes de navegar
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('La cotización se ha aceptado correctamente'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
       ),
     );
     setState(() {});
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -322,8 +332,32 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     InkWell(
-                      onTap: () {
-                        _cancelCite();
+                      onTap: () async {
+                        // Mostrar diálogo de confirmación antes de rechazar
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Confirmar rechazo'),
+                            content: const Text('¿Está seguro que desea rechazar la cotización?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.red,
+                                ),
+                                child: const Text('Rechazar'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await _cancelCite();
+                        }
                       },
                       child: Container(
                         width: 150,

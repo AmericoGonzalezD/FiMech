@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fimech/screens/admin/homead.dart';
 import 'package:fimech/screens/admin/widgets/actualtrackingad.dart';
 import 'package:fimech/screens/admin/widgets/completedtrackingad.dart';
 
@@ -51,64 +50,55 @@ class _TrackingPageADState extends State<TrackingPageAD> {
                 ),
                 height: 56,
                 width: MediaQuery.of(context).size.width,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              _buttonIndex = 0;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 50),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _buttonIndex = 0),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: _buttonIndex == 0
+                                ? Colors.green[300]
+                                : Colors.grey[100],
+                          ),
+                          child: Text(
+                            'Actuales',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                               color: _buttonIndex == 0
-                                  ? Colors.green[300]
-                                  : Colors.grey[100],
+                                  ? Colors.black
+                                  : Colors.black38,
                             ),
-                            child: Text("Actuales",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: _buttonIndex == 0
-                                      ? Colors.black
-                                      : Colors.black38,
-                                )),
                           ),
                         ),
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              _buttonIndex = 1;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 30),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _buttonIndex = 1),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: _buttonIndex == 1
+                                ? Colors.green[300]
+                                : Colors.grey[100],
+                          ),
+                          child: Text(
+                            'Completados',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                               color: _buttonIndex == 1
-                                  ? Colors.green[300]
-                                  : Colors.grey[100],
+                                  ? Colors.black
+                                  : Colors.black38,
                             ),
-                            child: Text("Completados",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: _buttonIndex == 1
-                                      ? Colors.black
-                                      : Colors.black38,
-                                )),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),

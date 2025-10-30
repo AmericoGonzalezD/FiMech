@@ -76,87 +76,66 @@ class _SchedulePageADState extends State<SchedulePageAD> {
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(10),
                 ),
-                height:
-                    56, // Altura fija para el contenedor que contiene los botones.
+                height: 56, // Altura fija para el contenedor que contiene los botones.
                 width: MediaQuery.of(context).size.width,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          _buttonIndex = 0;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: _buttonIndex == 0
-                              ? Colors.green[300]
-                              : Colors.grey[100],
-                        ),
-                        child: Text("Próximas",
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _buttonIndex = 0),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: _buttonIndex == 0 ? Colors.green[300] : Colors.grey[100],
+                          ),
+                          child: Text(
+                            'Próximas',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: _buttonIndex == 0
-                                  ? Colors.black
-                                  : Colors.black38,
-                            )),
+                              color: _buttonIndex == 0 ? Colors.black : Colors.black38,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 5), // Espaciado entre los botones
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          _buttonIndex = 1;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: _buttonIndex == 1
-                              ? Colors.green[300]
-                              : Colors.grey[100],
-                        ),
-                        child: Text("Completadas",
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _buttonIndex = 1),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: _buttonIndex == 1 ? Colors.green[300] : Colors.grey[100],
+                          ),
+                          child: Text(
+                            'Completadas',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: _buttonIndex == 1
-                                  ? Colors.black
-                                  : Colors.black38,
-                            )),
+                              color: _buttonIndex == 1 ? Colors.black : Colors.black38,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 5), // Espaciado entre los botones
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          _buttonIndex = 2;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: _buttonIndex == 2
-                              ? Colors.green[300]
-                              : Colors.grey[100],
-                        ),
-                        child: Text(
-                          "Canceladas",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: _buttonIndex == 2
-                                ? Colors.black
-                                : Colors.black38,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _buttonIndex = 2),
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: _buttonIndex == 2 ? Colors.green[300] : Colors.grey[100],
+                          ),
+                          child: Text(
+                            'Canceladas',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: _buttonIndex == 2 ? Colors.black : Colors.black38,
+                            ),
                           ),
                         ),
                       ),

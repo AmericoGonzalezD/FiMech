@@ -448,7 +448,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
 
     await showModalBottomSheet(
       context: context,
-     backgroundColor: const Color(0xF2FFF3FF),
+     backgroundColor: const Color(0xF3FFF8F2),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),

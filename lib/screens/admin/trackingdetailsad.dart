@@ -117,9 +117,11 @@ class _TrackDetailsPageADState extends State<TrackDetailsPageAD> {
               bottomNavigationBar: userPhoneNumber == null
                   ? const SizedBox(
                       height: 60,
-                      child: Center(child: CircularProgressIndicator()),
+
                     )
-                  : WhatsappButtonAD(widget._appointment.id, widget._appointment.auto, userPhoneNumber!),
+                  : (userPhoneNumber!.isEmpty
+                      ? const SizedBox.shrink()
+                      : WhatsappButtonAD(widget._appointment.id, widget._appointment.auto, userPhoneNumber!)),
               body: SafeArea(
                 child: SingleChildScrollView(
                   child: Column(

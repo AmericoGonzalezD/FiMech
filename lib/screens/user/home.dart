@@ -31,8 +31,7 @@ class _HomePageState extends State<HomePage> {
     ];
 
     Color selectedColor = Colors.green[300]!; // Color del elemento seleccionado en la barra de navegación inferior
-    Color unselectedColor = Colors.grey[
-        600]!; // Color del elemento no seleccionado en la barra de navegación inferior
+    Color unselectedColor = Colors.grey[600]!; // Color del elemento no seleccionado en la barra de navegación inferior
 
     return Scaffold(
       // Crea una nueva instancia de la clase Scaffold

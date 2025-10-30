@@ -228,91 +228,131 @@ class _CiteFormState extends State<CiteForm> {
   }
 
   Future<void> _saveCite() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      final DateTime dateTime = DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-        _selectedTime.hour,
-        _selectedTime.minute,
-      );
-      DocumentReference appointmentRef =
-          await FirebaseFirestore.instance.collection('citas').add({
-        'userId': userId,
-        'automovil': _model,
-        'date': dateTime,
-        'motivo': _reason,
-        'status': 'Pendiente',
-        'status2': 'Pendiente',
-        'reason': 'Evaluando proceso',
-        'reason2': 'Evaluando proceso',
-        'progreso': 'Pendiente de evaluar',
-        'progreso2': '',
-        'date_update': dateTime,
-        'costo': "",
-        'idMecanico': _selectedWorkshopId ?? '',
-        'workshopName': _selectedWorkshopName ?? '',
-        'workshopAddress': _selectedWorkshopAddress ?? '',
-        'descriptionService': "",
-      });
-
-      await appointmentRef.collection('citasDiagnostico').doc('Aceptado').set({
-        'progreso2': "",
-        'date_update': dateTime,
-        'reason2': "",
-        'costo': "",
-        'descriptionService': "",
-        'status2': '',
-      }, SetOptions(merge: true));
-      await appointmentRef
-          .collection('citasDiagnostico')
-          .doc('Completado')
-          .set({
-        'progreso2': "",
-        'date_update': dateTime,
-        'reason2': "",
-        'costo': "",
-        'descriptionService': "",
-        'status2': '',
-      }, SetOptions(merge: true));
-      await appointmentRef
-          .collection('citasDiagnostico')
-          .doc('Reparacion')
-          .set({
-        'progreso2': "",
-        'date_update': dateTime,
-        'reason2': "",
-        'costo': "",
-        'descriptionService': "",
-        'status2': '',
-      }, SetOptions(merge: true));
-      await appointmentRef.collection('citasDiagnostico').doc('Revision').set({
-        'progreso2': "",
-        'date_update': dateTime,
-        'reason2': "",
-        'costo': "",
-        'descriptionService': "",
-        'status2': '',
-      }, SetOptions(merge: true));
-// Obtener el email del usuario
-
-      String userEmail = await getUserEmail(userId);
-
-      EmailSender.sendMailFromGmail(userEmail);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(),
-        ),
-      );
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('La cita se ha agendado correctamente'),
+          content: Text('Ingrese todos los campos'),
+          backgroundColor: Colors.red,
         ),
       );
+      return;
     }
+
+    _formKey.currentState!.save();
+    final DateTime dateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    // Validar que la hora esté dentro del rango permitido (9:00 - 17:00)
+    final TimeOfDay startTime = const TimeOfDay(hour: 9, minute: 0);
+    final TimeOfDay endTime = const TimeOfDay(hour: 17, minute: 0);
+    if (!_isTimeInRange(_selectedTime, startTime, endTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleccione una hora entre las 9:00 y las 17:00'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validar que la fecha/hora no esté en el pasado
+    if (dateTime.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La fecha y hora seleccionada no puede estar en el pasado'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    DocumentReference appointmentRef =
+        await FirebaseFirestore.instance.collection('citas').add({
+      'userId': userId,
+      'automovil': _model,
+      'date': dateTime,
+      'motivo': _reason,
+      'status': 'Pendiente',
+      'status2': 'Pendiente',
+      'reason': 'Evaluando proceso',
+      'reason2': 'Evaluando proceso',
+      'progreso': 'Pendiente de evaluar',
+      'progreso2': '',
+      'date_update': dateTime,
+      'costo': "",
+      'idMecanico': _selectedWorkshopId ?? '',
+      'workshopName': _selectedWorkshopName ?? '',
+      'workshopAddress': _selectedWorkshopAddress ?? '',
+      'descriptionService': "",
+    });
+
+    await appointmentRef.collection('citasDiagnostico').doc('Aceptado').set({
+      'progreso2': "",
+      'date_update': dateTime,
+      'reason2': "",
+      'costo': "",
+      'descriptionService': "",
+      'status2': '',
+    }, SetOptions(merge: true));
+    await appointmentRef
+        .collection('citasDiagnostico')
+        .doc('Completado')
+        .set({
+      'progreso2': "",
+      'date_update': dateTime,
+      'reason2': "",
+      'costo': "",
+      'descriptionService': "",
+      'status2': '',
+    }, SetOptions(merge: true));
+    await appointmentRef
+        .collection('citasDiagnostico')
+        .doc('Reparacion')
+        .set({
+      'progreso2': "",
+      'date_update': dateTime,
+      'reason2': "",
+      'costo': "",
+      'descriptionService': "",
+      'status2': '',
+    }, SetOptions(merge: true));
+    await appointmentRef.collection('citasDiagnostico').doc('Revision').set({
+      'progreso2': "",
+      'date_update': dateTime,
+      'reason2': "",
+      'costo': "",
+      'descriptionService': "",
+      'status2': '',
+    }, SetOptions(merge: true));
+    // Obtener el email del usuario
+
+    String userEmail = await getUserEmail(userId);
+
+    // Enviar correo con confirmación
+    EmailSender.sendMailFromGmail(userEmail);
+
+    // Mostrar SnackBar de confirmación e información adicional
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('La cita se ha agendado correctamente. Se le enviarán actualizaciones por correo.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // Dar tiempo al usuario para ver el SnackBar y luego navegar a Home
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(),
+      ),
+    );
   }
 
   @override
@@ -406,12 +446,8 @@ class _CiteFormState extends State<CiteForm> {
                       ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator()))
                       : DropdownButtonFormField<String>(
                     initialValue: _selectedWorkshopId == '' ? null : _selectedWorkshopId,
-                    hint: const Text('Seleccione un taller o Ninguno'),
+                    hint: const Text('Seleccione un taller'),
                     items: [
-                      const DropdownMenuItem<String>(
-                        value: '',
-                        child: Text('Ninguno'),
-                      ),
                       ..._workshops.map((w) => DropdownMenuItem<String>(
                         value: w['id'],
                         child: Text(w['name'] ?? 'Taller'),
@@ -445,6 +481,15 @@ class _CiteFormState extends State<CiteForm> {
                       "Ingresa el día y hora:",
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox( height: 2,),
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      "* El horario de atención es de 9:00 am a 5:00 pm",
+                      style:
+                      TextStyle(fontSize: 14, color: Colors.black54),
                     ),
                   ),
                   const SizedBox(
@@ -555,10 +600,9 @@ class EmailSender {
           '<body style="text-align: center; font-family: Tahoma, Geneva, Verdana, sans-serif;"> <div style="margin:auto; border-radius: 10px; width: 300px; padding: 10px; box-shadow: 1px 1px 1px 1px rgb(174, 174, 174);"> <h2>Hola, se ha agendado la cita en la lista de espera del taller mecanico</h2> <p>Espere a nuevas actualizaciones para saber sobre su estatus</p></div></body>';
 
     try {
-      final sendReport = await send(message, gmailSmtp);
-      // Message sent
-     } on MailerException catch (e) {
+      await send(message, gmailSmtp);
+    } on MailerException {
       // Message not sent - handle or log as needed
-     }
+    }
   }
 }

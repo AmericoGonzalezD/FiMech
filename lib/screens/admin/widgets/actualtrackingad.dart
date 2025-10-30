@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fimech/model/appointment.dart';
@@ -97,6 +98,7 @@ class CardAppointment extends StatefulWidget {
 class _CardAppointmentState extends State<CardAppointment> {
   Appointment? _appointment; //state local
   late String userId;
+  String? _workshopImageUrl; // URL de la imagen del taller asignado
 
   Future<void> getUserId() async {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -121,6 +123,27 @@ class _CardAppointmentState extends State<CardAppointment> {
     setState(() {
       _appointment = appointment;
     });
+    // Cargar la imagen del taller asignado, si existe el id del mecánico
+    if ((appointment.idMecanico ?? '').isNotEmpty) {
+      _loadWorkshopImage(appointment.idMecanico);
+    }
+  }
+
+  Future<void> _loadWorkshopImage(String mechanicId) async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('admin').doc(mechanicId).get();
+      if (doc.exists) {
+        final data = doc.data();
+        final url = data?['workshopImageUrl'] as String;
+        if (mounted) {
+          setState(() {
+            _workshopImageUrl = url;
+          });
+        }
+      }
+    } catch (e) {
+      // ignore errors and leave _workshopImageUrl null to use fallback
+    }
   }
 
   @override
@@ -155,10 +178,30 @@ class _CardAppointmentState extends State<CardAppointment> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(_appointment!.motivo),
-                  trailing: const CircleAvatar(
+                  trailing: CircleAvatar(
                     radius: 25,
-                    backgroundImage: NetworkImage(
-                        "https://patiodeautos.com/wp-content/uploads/2018/09/6-consejos-para-convertirte-en-un-mejor-mecanico-de-autos.jpg"),
+                    backgroundColor: Colors.grey[200],
+                    child: ClipOval(
+                      child: (_workshopImageUrl != null && _workshopImageUrl!.isNotEmpty)
+                          ? Image.network(
+                              _workshopImageUrl!,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const SizedBox(
+                                  width: 50,
+                                  height: 50,
+                                  child: Icon(Icons.car_repair, color: Colors.black54),
+                                );
+                              },
+                            )
+                          : const SizedBox(
+                              width: 50,
+                              height: 50,
+                              child: Icon(Icons.car_repair, color: Colors.black54),
+                            ),
+                    ),
                   ),
                 ),
                 const Padding(
