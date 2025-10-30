@@ -121,6 +121,7 @@ class CardAppointment extends StatefulWidget {
 class _CardAppointmentState extends State<CardAppointment> {
   Appointment? _appointment; //state local
   String? _workshopImageUrl; // imagen del taller asignado
+  bool _diagnosticoRejected = false; // flag si algún diagnostico está rechazado
 
   @override
   void initState() {
@@ -137,6 +138,32 @@ class _CardAppointmentState extends State<CardAppointment> {
     final mechanicId = appointment.idMecanico;
     if (mechanicId.isNotEmpty) {
       _loadWorkshopImage(mechanicId);
+    }
+    // Cargar estado de los diagnosticos asociados para saber si alguno fue rechazado
+    _loadDiagnosticoRejected(appointmentId);
+  }
+
+  Future<void> _loadDiagnosticoRejected(String appointmentId) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('citas')
+          .doc(appointmentId)
+          .collection('citasDiagnostico')
+          .get();
+      bool rejected = false;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final diag = (data['diagnostico'] as String?) ?? (data['status2'] as String?);
+        if (diag != null && diag.toLowerCase() == 'rechazado') {
+          rejected = true;
+          break;
+        }
+      }
+      if (mounted) {
+        setState(() => _diagnosticoRejected = rejected);
+      }
+    } catch (_) {
+      // ignore errors and keep false
     }
   }
 
@@ -184,7 +211,10 @@ class _CardAppointmentState extends State<CardAppointment> {
                 ListTile(
                   title: Text(
                     _appointment!.auto,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _diagnosticoRejected ? Colors.red : Colors.black,
+                    ),
                   ),
                   subtitle: Text(_appointment!.motivo),
                   trailing: CircleAvatar(

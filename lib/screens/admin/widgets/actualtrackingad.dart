@@ -60,15 +60,13 @@ class _ActualTrackingADState extends State<ActualTrackingAD> {
                 SingleChildScrollView(
                   child: Column(
                     children: appointments.map((appointment) {
-                      if (appointment.costo == "Aceptado") {
+                      // Mostrar cualquier cita que tenga status 'Pendiente'.
+                      // De esta forma, si el diagnóstico fue rechazado, la cita seguirá
+                      // apareciendo en 'Servicios Pendientes' hasta que el admin la marque como 'Completado'.
+                      if (appointment.status == 'Pendiente') {
                         return CardAppointment(appointment.id, appointment);
-                      } else if (appointment.costo != "Aceptado" &&
-                          appointment.status2 != "Reparacion") {
-                        return CardAppointment(appointment.id,
-                            appointment); // O cualquier otro widget que no ocupe espacio
-                      } else {
-                        return Container();
                       }
+                      return Container();
                     }).toList(),
                   ),
                 ),
@@ -124,8 +122,9 @@ class _CardAppointmentState extends State<CardAppointment> {
       _appointment = appointment;
     });
     // Cargar la imagen del taller asignado, si existe el id del mecánico
-    if ((appointment.idMecanico ?? '').isNotEmpty) {
-      _loadWorkshopImage(appointment.idMecanico);
+    final mechId = appointment.idMecanico;
+    if (mechId.isNotEmpty) {
+      _loadWorkshopImage(mechId);
     }
   }
 

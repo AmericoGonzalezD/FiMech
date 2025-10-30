@@ -8,7 +8,8 @@ import 'package:fimech/screens/user/widgets/upcoming.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SchedulePage extends StatefulWidget {
-  const SchedulePage({super.key});
+  final bool showReturnButton; // si true, muestra el botón para regresar al formulario
+  const SchedulePage({super.key, this.showReturnButton = false});
 
   @override
   State<SchedulePage> createState() => _SchedulePageState();
@@ -33,6 +34,15 @@ class _SchedulePageState extends State<SchedulePage> {
           'Citas',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        leading: widget.showReturnButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  // Regresa al formulario de cita (navega hacia atrás a la pantalla anterior)
+                  Navigator.pop(context);
+                },
+              )
+            : null,
         actions: <Widget>[
           // Verifica si el usuario está autenticado
           if (FirebaseAuth.instance.currentUser != null)

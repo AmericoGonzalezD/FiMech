@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server/gmail.dart';
-import 'package:fimech/screens/user/home.dart';
+import 'package:fimech/screens/user/schedule.dart';
 import 'package:fimech/screens/user/widgets/sectionheading.dart';
 import 'package:fimech/services/appointment_service.dart';
 
@@ -347,10 +347,11 @@ class _CiteFormState extends State<CiteForm> {
     // Dar tiempo al usuario para ver el SnackBar y luego navegar a Home
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
-    Navigator.pushReplacement(
+    // Navegar al calendario mostrando el botón de regreso (para volver al formulario)
+    Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => HomePage(),
+        builder: (context) => const SchedulePage(showReturnButton: true),
       ),
     );
   }

@@ -55,12 +55,8 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
   }
 
   Future<void> _cancelCite() async {
-    await FirebaseFirestore.instance
-        .collection('citas')
-        .doc(widget._appointment.id)
-        .update({'status': 'Cancelado'});
-
-    // Marcar el diagnóstico como rechazado (si existe)
+    // No cambiar el estado general de la cita para que permanezca "Pendiente".
+    // Sólo actualizar el subdocumento del diagnóstico a 'Rechazado'.
     try {
       await FirebaseFirestore.instance
           .collection('citas')
@@ -72,7 +68,7 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
         _diagnosticoStatus = 'Rechazado';
       });
     } catch (_) {
-      // ignore
+      // ignore errores en la actualización del diagnóstico
     }
 
     // Mostrar snackbar rojo de rechazo y esperar antes de navegar

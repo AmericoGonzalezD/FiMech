@@ -21,11 +21,13 @@ class DiagnosticPageAD extends StatefulWidget {
 class _DiagnosticPageADState extends State<DiagnosticPageAD> {
   void setAppointment(Appointment appointment) {}
   String? userPhoneNumber;
+  String? _diagnosticoStatus;
 
   @override
   void initState() {
     super.initState();
     _getUserPhoneNumber();
+    _loadDiagnosticoStatus();
   }
 
   Future<void> _getUserPhoneNumber() async {
@@ -33,24 +35,60 @@ class _DiagnosticPageADState extends State<DiagnosticPageAD> {
     setState(() {}); // To trigger a rebuild with the updated phone number
   }
 
-  Future<void> _cancelCite() async {
-    await FirebaseFirestore.instance
-        .collection('citas')
-        .doc(widget._appointment.id)
-        .update({'status': 'Cancelado'});
+  Future<void> _loadDiagnosticoStatus() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('citas')
+          .doc(widget._appointment.id)
+          .collection('citasDiagnostico')
+          .doc(widget._diagnostico.id)
+          .get();
+      if (doc.exists) {
+        final data = doc.data();
+        final dyn = (data?['diagnostico'] as String?) ?? (data?['status2'] as String?);
+        setState(() {
+          _diagnosticoStatus = dyn ?? widget._diagnostico.status2;
+        });
+        return;
+      }
+    } catch (_) {
+      // ignore
+    }
+    setState(() {
+      _diagnosticoStatus = widget._diagnostico.status2;
+    });
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('La cita se ha cancelado correctamente'),
-      ),
-    );
-    setState(() {});
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HomePage(),
-      ),
-    );
+  Future<void> _cancelCite() async {
+    // No cambiar el estado de la cita principal para que siga apareciendo en "Actuales".
+    // Sólo marcar el diagnóstico asociado como 'Rechazado'.
+    try {
+      await FirebaseFirestore.instance
+          .collection('citas')
+          .doc(widget._appointment.id)
+          .collection('citasDiagnostico')
+          .doc(widget._diagnostico.id)
+          .update({'diagnostico': 'Rechazado'});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La cotización se ha rechazado correctamente'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {});
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomePage(),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al rechazar la cotización: $e')),
+      );
+    }
   }
 
   Future<void> _acceptCite() async {
@@ -222,10 +260,35 @@ class _DiagnosticPageADState extends State<DiagnosticPageAD> {
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Estado del diagnóstico:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: Text(
+                      (_diagnosticoStatus != null && _diagnosticoStatus!.isNotEmpty)
+                          ? _diagnosticoStatus!
+                          : 'Pendiente',
+                      style: TextStyle(
+                        color: (_diagnosticoStatus == 'Aceptado'
+                            ? Colors.green[700]
+                            : (_diagnosticoStatus == 'Rechazado' ? Colors.red[700] : Colors.black54)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(
                 height: 18,
               ),
-              /*Row(
+              Row(
                 children: [
                   Expanded(
                     flex: 3,
@@ -266,7 +329,7 @@ class _DiagnosticPageADState extends State<DiagnosticPageAD> {
                     children: _imagesList(context),
                   ),
                 ),
-              ),*/
+              ),
             ],
           ),
         ),
