@@ -25,6 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isAdmin = false;
   @override
   void dispose() {
+    _nameController.dispose(); // Limpia el controlador del nombre.
     _emailController.dispose(); // Limpia el controlador de correo electrónico.
     _passwordController.dispose(); // Limpia el controlador de contraseña.
 
@@ -43,24 +44,69 @@ class _RegisterPageState extends State<RegisterPage> {
           child: CircularProgressIndicator(), // Muestra un diálogo de carga.
         ),
       );
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text
             .trim(), // Obtiene el correo electrónico del controlador y elimina espacios en blanco.
         password: _passwordController.text
             .trim(), // Obtiene la contraseña del controlador y elimina espacios en blanco.
       );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                LoginPage()), // Navega a la pantalla de inicio de sesión.
-      );
-    } on FirebaseAuthException catch (e) {
-      print(e);
+      final User? user = userCredential.user;
 
-      Utils.showSnackBar(
-          e.message); // Muestra un mensaje de error en forma de Snackbar.
+      if (user != null) {
+        // Almacena la información del usuario en la colección correspondiente
+        if (_isAdmin) {
+          await FirebaseFirestore.instance.collection('admin').doc(user.uid).set({
+            'uid': user.uid,
+            'name': _nameController.text,
+            'email': _emailController.text,
+          });
+        } else {
+          await FirebaseFirestore.instance.collection('client').doc(user.uid).set({
+            'uid': user.uid,
+            'name': _nameController.text,
+            'email': _emailController.text,
+          });
+        }
+
+        // Cerrar diálogo de carga
+        if (mounted) Navigator.of(context).pop();
+
+        // Mostrar SnackBar de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registro completo'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Esperar un momento para que el usuario vea el SnackBar, luego redirigir al login
+        await Future.delayed(const Duration(seconds: 1));
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // Cerrar diálogo de carga si está abierto
+      if (mounted) Navigator.of(context).pop();
+      // Mostrar SnackBar de error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registro incompleto: ${e.message ?? 'Error'}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registro incompleto: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -166,7 +212,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           labelText:
                               'Contraseña', // Etiqueta del campo de texto.
                           hintText:
-                              '••••••••', // Texto de sugerencia dentro del campo de texto para la contraseña.
+                              '••••••��•', // Texto de sugerencia dentro del campo de texto para la contraseña.
                           prefixIcon: const Icon(Icons
                               .lock), // Icono del prefijo para la contraseña.
                           suffixIcon: IconButton(
@@ -199,7 +245,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     const SizedBox(height: 40.0),
-                    CheckboxListTile(
+                 /*   CheckboxListTile(
                       title: const Text('Registrarse como administrador'),
                       value: _isAdmin,
                       onChanged: (value) {
@@ -207,7 +253,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           _isAdmin = value!;
                         });
                       },
-                    ),
+                    ),*/
                     const SizedBox(height: 40.0),
                     ElevatedButton(
                       // Botón para registrarse.
@@ -253,17 +299,33 @@ class _RegisterPageState extends State<RegisterPage> {
                                 'email': _emailController.text,
                                 'password': _passwordController.text
                               });
+
                             }
 
+                            // Mostrar SnackBar de éxito
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Registro completo'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+
+                            // Esperar un momento y redirigir al login
+                            await Future.delayed(const Duration(seconds: 1));
+                            if (!mounted) return;
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                   builder: (context) => LoginPage()),
                             );
                           } on FirebaseAuthException catch (e) {
-                            print(e);
-
                             Utils.showSnackBar(e.message);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Registro incompleto: ${e.message ?? 'Error'}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
                           }
                         }
                       },

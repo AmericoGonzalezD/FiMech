@@ -142,6 +142,7 @@ class _TalleresScreenState extends State<TalleresScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xF3FFF8F2),
         title: const Text('Talleres', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<QuerySnapshot>(

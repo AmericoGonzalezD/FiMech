@@ -57,6 +57,7 @@ class ImageViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xF2FFF3FF),
         title: const Text(
           'Imágenes',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -70,4 +71,3 @@ class ImageViewer extends StatelessWidget {
     );
   }
 }
-

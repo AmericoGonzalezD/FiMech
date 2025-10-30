@@ -38,6 +38,7 @@ class MessagesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xF3FFF8F2),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {

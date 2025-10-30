@@ -100,6 +100,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
           } else {
             return Scaffold(
               appBar: AppBar(
+                backgroundColor: const Color(0xF3FFF8F2),
                 title: const Text(
                   'Detalles',
                   style: TextStyle(fontWeight: FontWeight.bold),

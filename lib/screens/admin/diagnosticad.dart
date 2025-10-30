@@ -79,6 +79,7 @@ class _DiagnosticPageADState extends State<DiagnosticPageAD> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xF3FFF8F2),
         title: const Text(
           'Diagnostico',
           style: TextStyle(fontWeight: FontWeight.bold),

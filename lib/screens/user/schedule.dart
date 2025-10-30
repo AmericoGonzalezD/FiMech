@@ -5,6 +5,7 @@ import 'package:fimech/screens/user/citeform.dart';
 import 'package:fimech/screens/user/widgets/cancelled.dart';
 import 'package:fimech/screens/user/widgets/completed.dart';
 import 'package:fimech/screens/user/widgets/upcoming.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -27,6 +28,7 @@ class _SchedulePageState extends State<SchedulePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xF3FFF8F2),
         title: const Text(
           'Citas',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -36,9 +38,14 @@ class _SchedulePageState extends State<SchedulePage> {
           if (FirebaseAuth.instance.currentUser != null)
             IconButton(
               icon: const Icon(Icons.logout),
-              onPressed: () {
-                // Implementa la función de cierre de sesión
-                FirebaseAuth.instance.signOut();
+              onPressed: () async {
+                // Eliminar sesión guardada y cerrar sesión de Firebase
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('saved_uid');
+                  await prefs.remove('saved_isAdmin');
+                } catch (_) {}
+                await FirebaseAuth.instance.signOut();
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => LoginPage()),

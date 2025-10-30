@@ -53,7 +53,7 @@ class WhatsappButtonAD extends StatelessWidget {
     // Normalizar el número recibido
     final String? normalized = _normalizePhone(phone);
     final bool isEnabled = normalized != null;
-    final String message = "Hola, soy mecanico dentro del taller MechanicTracking. Tengo una consulta sobre su auto: $nombre con un id de cita de: $idCita";
+    final String message = "Hola, soy mecanico dentro del taller MechanicTracking. Tengo una consulta sobre su auto: $nombre";
 
     return GestureDetector(
       onTap: () {},

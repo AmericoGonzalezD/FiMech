@@ -5,6 +5,7 @@ import 'package:fimech/screens/recovery.dart';// Importa la pantalla de recupera
 import 'package:fimech/screens/register.dart';// Importa la pantalla de registro.
 import 'package:fimech/screens/user/home.dart';// Importa la pantalla de inicio de la aplicación.
 import 'package:firebase_auth/firebase_auth.dart'; // Importa la autenticación de Firebase.
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart'; // Importa el paquete flutter material.
 
 class LoginPage extends StatefulWidget {
@@ -42,30 +43,59 @@ class _LoginPageState extends State<LoginPage> {
 
     if (user != null && await _isUserAuthenticated(user)) {
       final credencial = user.uid;
-      print(credencial);
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(credencial)
-          .get();
+      // Intentar determinar rol desde Firestore
+      try {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('admin')
+            .doc(credencial)
+            .get();
+        final isAdmin = userDoc.exists;
+        // Persistir en SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('saved_uid', credencial);
+        await prefs.setBool('saved_isAdmin', isAdmin);
 
-      if (userDoc.exists) {
-        final isAdmin = userDoc.data()?['isAdmin'] ?? false;
         if (isAdmin) {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => HomePageAD()),
-            (route) =>
-                false, // Elimina todas las rutas de navegación anteriores
+            (route) => false,
           );
         } else {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => HomePage()),
-            (route) =>
-                false, // Elimina todas las rutas de navegación anteriores
+            (route) => false,
+          );
+        }
+      } catch (_) {
+        // Si falla la lectura en Firestore, no navegar automáticamente
+      }
+      return;
+    }
+
+    // Si no hay user en FirebaseAuth, intentar restaurar desde SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedUid = prefs.getString('saved_uid');
+      final savedIsAdmin = prefs.getBool('saved_isAdmin') ?? false;
+      if (savedUid != null && savedUid.isNotEmpty) {
+        if (savedIsAdmin) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => HomePageAD()),
+            (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => HomePage()),
+            (route) => false,
           );
         }
       }
+    } catch (_) {
+      // ignore errors reading prefs
     }
   }
 
@@ -89,29 +119,40 @@ class _LoginPageState extends State<LoginPage> {
       final User? user = userCredential.user;
       final credencial = user?.uid;
       if (user != null) {
+        // Cerrar el diálogo de carga
+        Navigator.pop(context);
+        // Persistir sesión en SharedPreferences
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('saved_uid', credencial ?? '');
+        } catch (_) {}
         final userDoc = await FirebaseFirestore.instance
             .collection('admin')
             .doc(credencial)
             .get();
 
-        if (userDoc.exists) {
+        final isAdmin = userDoc.exists;
+        // Guardar flag de admin
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('saved_isAdmin', isAdmin);
+        } catch (_) {}
+
+        if (isAdmin) {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => HomePageAD()),
-            (route) =>
-                false, // Elimina todas las rutas de navegación anteriores
+            (route) => false,
           );
         } else {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => HomePage()),
-            (route) =>
-                false, // Elimina todas las rutas de navegación anteriores
+            (route) => false,
           );
         }
       }
     } on FirebaseAuthException catch (e) {
-      print(e);
       Navigator.pop(context);
       if (e.code == 'wrong-password') {
         showDialog(
@@ -214,7 +255,7 @@ class _LoginPageState extends State<LoginPage> {
                       obscureText: _obscureText,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       validator: (value) => value != null && value.length < 8
-                          ? 'Contraseña Incorrecta'
+                          ? 'Ingresa una contraseña de al menos 8 caracteres'
                           : null,
                     ),
                   ),
@@ -234,7 +275,7 @@ class _LoginPageState extends State<LoginPage> {
                             e.code == 'wrong-password') {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Contraseña incorrecta'),
+                              content: Text('Correo y/o Contraseña incorrectos'),
                               backgroundColor: Colors.red,
                             ),
                           );

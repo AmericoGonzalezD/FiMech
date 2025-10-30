@@ -256,6 +256,7 @@ class _TrackFormADState extends State<TrackFormAD> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xF3FFF8F2),
         title: Text(
           //'Actualizar',
           widget._appointment.auto,

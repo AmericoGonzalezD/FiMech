@@ -22,17 +22,7 @@ class _TrackingPageState extends State<TrackingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      const HomePage()), // Navega a la página de registro.
-            );
-          },
-        ),
+        backgroundColor: const Color(0xF3FFF8F2),
         title: const Text(
           'Seguimiento',
           style: TextStyle(fontWeight: FontWeight.bold),

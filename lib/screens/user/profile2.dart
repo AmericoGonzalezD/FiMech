@@ -3,8 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:fimech/screens/user/home.dart';
-//import 'package:fimech/screens/user/homer/widgets/profiledata.dart';
+// import 'package:fimech/screens/user/home.dart';
 import 'package:fimech/screens/user/widgets/circularimage.dart';
 import 'package:fimech/screens/user/widgets/profiledata.dart';
 import 'package:fimech/screens/user/widgets/sectionheading.dart';
@@ -113,19 +112,10 @@ class _ProfilePage2State extends State<ProfilePage2> {
         .collection('client')
         .doc(user?.uid)
         .snapshots();
-    final picker = ImagePicker();
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => HomePage()),
-            );
-          },
-        ),
+        backgroundColor: const Color(0xF3FFF8F2),
         title: const Text(
           'Perfil',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -245,22 +235,29 @@ class _ProfilePage2State extends State<ProfilePage2> {
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
-                                  title: const Text('Editar nombre'),
-                                  content: TextField(
-                                    onChanged: (value) {
-                                      newName = value;
-                                    },
-                                    decoration: const InputDecoration(
-                                        hintText: 'Nombre'),
+                                  backgroundColor: const Color(0xF2FFF3FF),
+                                   title: const Text('Editar nombre'),
+                                   content: TextField(
+                                     onChanged: (value) {
+                                       newName = value;
+                                     },
+                                     decoration: const InputDecoration(
+                                         hintText: 'Nombre'),
 
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancelar'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
+                                   ),
+                                   actions: [
+                                     TextButton(
+                                       onPressed: () => Navigator.pop(context),
+                                       child: const Text('Cancelar', style: TextStyle( color: Colors.red)),
+                                     ),
+                                     TextButton(
+                                       onPressed: () async {
+                                        if (newName?.trim().isEmpty ?? true) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Ingrese un nombre válido')),
+                                          );
+                                          return;
+                                        }
                                         if (newName != _userData?['name']) {
                                           await FirebaseFirestore.instance
                                               .collection('client')
@@ -271,31 +268,16 @@ class _ProfilePage2State extends State<ProfilePage2> {
                                           });
                                         }
                                         Navigator.pop(context);
-                                      },
-                                      child: const Text('Guardar'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        // Dropdown para seleccionar taller preferido dentro de la sección "Informacion de Usuario"
+                                       },
+                                       child: Text('Guardar', style: TextStyle(color: Colors.green[600]),),
+                                     ),
+                                   ],
+                                 );
+                               },
+                             );
+                           },
+                         ),
 
-                        ProfileData(
-                            title: 'User ID',
-                            value: _userData?['uid'] ?? 'N/A',
-                            icon: Icons.copy,
-                            onPressed: () {
-                              Clipboard.setData(ClipboardData(
-                                  text: _userData?['uid'] ?? 'N/A'));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Los datos se han copiado'),
-                                ),
-                              );
-                            }),
                         const SizedBox(
                           height: 8,
                         ),
@@ -344,6 +326,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
+                                  backgroundColor: const Color(0xF2FFF3FF),
                                   title: const Text('Editar telefono'),
                                   content: TextField(
                                     onChanged: (value) {
@@ -355,10 +338,16 @@ class _ProfilePage2State extends State<ProfilePage2> {
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancelar'),
+                                      child: const Text('Cancelar', style: TextStyle( color: Colors.red)),
                                     ),
                                     TextButton(
                                       onPressed: () async {
+                                        if (newPhone?.trim().isEmpty ?? true) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Ingrese un teléfono válido')),
+                                          );
+                                          return;
+                                        }
                                         if (newPhone != _userData?['phone']) {
                                           await FirebaseFirestore.instance
                                               .collection('client')
@@ -370,7 +359,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
                                         }
                                         Navigator.pop(context);
                                       },
-                                      child: const Text('Guardar'),
+                                      child: Text('Guardar', style: TextStyle(color: Colors.green[600]),),
                                     ),
                                   ],
                                 );
@@ -387,6 +376,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
+                                  backgroundColor: const Color(0xF2FFF3FF),
                                   title: const Text('Editar direccion'),
                                   content: TextField(
                                     onChanged: (value) {
@@ -398,12 +388,17 @@ class _ProfilePage2State extends State<ProfilePage2> {
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancelar'),
+                                      child: const Text('Cancelar', style: TextStyle( color: Colors.red)),
                                     ),
                                     TextButton(
                                       onPressed: () async {
-                                        if (newAddress !=
-                                            _userData?['address']) {
+                                        if (newAddress?.trim().isEmpty ?? true) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Ingrese una dirección válida')),
+                                          );
+                                          return;
+                                        }
+                                        if (newAddress != _userData?['address']) {
                                           await FirebaseFirestore.instance
                                               .collection('client')
                                               .doc(user?.uid)
@@ -414,7 +409,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
                                         }
                                         Navigator.pop(context);
                                       },
-                                      child: const Text('Guardar'),
+                                      child: Text('Guardar', style: TextStyle(color: Colors.green[600]),),
                                     ),
                                   ],
                                 );
@@ -453,6 +448,10 @@ class _ProfilePage2State extends State<ProfilePage2> {
 
     await showModalBottomSheet(
       context: context,
+     backgroundColor: const Color(0xF2FFF3FF),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
       builder: (context) {
         if (_availableWorkshops.isEmpty) {
           return const SizedBox(height: 200, child: Center(child: Text('No hay talleres disponibles')));
@@ -460,6 +459,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
         return SizedBox(
           height: 400,
           child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             children: [
               ListTile(
                 title: const Text('Ninguno'),

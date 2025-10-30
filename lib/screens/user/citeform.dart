@@ -319,6 +319,7 @@ class _CiteFormState extends State<CiteForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xF3FFF8F2),
         title: const Text(
           'Agendar',
           style: TextStyle(fontWeight: FontWeight.bold),

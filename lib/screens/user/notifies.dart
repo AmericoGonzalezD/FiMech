@@ -29,6 +29,7 @@ class _NotifiesPageState extends State<NotifiesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xF3FFF8F2),
         title:
             const Text('Notificaciones', style: TextStyle(fontWeight: FontWeight.bold),), // Título de la barra de aplicación.
       ),

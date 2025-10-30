@@ -54,8 +54,8 @@ class _HomePageState extends State<HomePage> {
         selectedItemColor: selectedColor, // Color del elemento seleccionado
         unselectedItemColor:
             unselectedColor, // Color del elemento no seleccionado
-        backgroundColor: Colors.white
-            .withOpacity(1), // Fondo de la barra de navegación inferior
+        backgroundColor: const Color(0xF3FFF8F2),
+
         items: const <BottomNavigationBarItem>[
           //Elementos de la barra de navegación inferior
           // BottomNavigationBarItem(
@@ -67,8 +67,8 @@ class _HomePageState extends State<HomePage> {
             label: 'Citas', // Etiqueta del elemento
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.store), // Icono para Talleres
-            label: 'Talleres',
+            icon: Icon(Icons.store), // Icono del elemento
+            label: 'Talleres', // Etiqueta del elemento
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.content_paste_search), // Icono del elemento
