@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:fimech/screens/login.dart';
 import 'package:fimech/screens/user/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';

@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fimech/model/appointment.dart';
 import 'package:fimech/screens/user/trackdetails.dart';
 import 'package:fimech/services/appointment_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ActualTracking extends StatefulWidget {
   const ActualTracking({super.key});
@@ -119,6 +121,7 @@ class CardAppointment extends StatefulWidget {
 
 class _CardAppointmentState extends State<CardAppointment> {
   Appointment? _appointment; //state local
+  String? _workshopImageUrl;
 
   @override
   void initState() {
@@ -131,6 +134,47 @@ class _CardAppointmentState extends State<CardAppointment> {
     setState(() {
       _appointment = appointment;
     });
+    // Cargar la imagen del taller asignado
+    try {
+      final mechId = appointment.idMecanico;
+      if (mechId.isNotEmpty) {
+        _loadWorkshopImage(mechId);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadWorkshopImage(String mechanicId) async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('admin').doc(mechanicId).get();
+      if (doc.exists) {
+        final data = doc.data();
+        final raw = data?['workshopImageUrl'] ?? data?['image'] ?? data?['workshopImage'];
+        final resolved = await _resolveImageUrl(raw);
+        if (mounted) setState(() => _workshopImageUrl = resolved);
+      }
+    } catch (_) {
+      // ignore errors and keep null
+    }
+  }
+
+  Future<String?> _resolveImageUrl(dynamic raw) async {
+    try {
+      if (raw == null) return null;
+      if (raw is String && raw.trim().isNotEmpty) {
+        final s = raw.trim();
+        if (s.startsWith('http')) return s;
+        // intentar resolver como referencia de Firebase Storage
+        try {
+          final url = await FirebaseStorage.instance.ref().child(s).getDownloadURL();
+          return url;
+        } catch (_) {
+          return null;
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -163,10 +207,11 @@ class _CardAppointmentState extends State<CardAppointment> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(_appointment!.motivo),
-                  trailing: const CircleAvatar(
+                  trailing: CircleAvatar(
                     radius: 25,
-                    backgroundImage: NetworkImage(
-                        "https://patiodeautos.com/wp-content/uploads/2018/09/6-consejos-para-convertirte-en-un-mejor-mecanico-de-autos.jpg"),
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: _workshopImageUrl != null ? NetworkImage(_workshopImageUrl!) : null,
+                    child: _workshopImageUrl == null ? const Icon(Icons.store, color: Colors.black54) : null,
                   ),
                 ),
                 const Padding(

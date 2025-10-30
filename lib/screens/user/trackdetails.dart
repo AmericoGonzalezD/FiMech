@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fimech/model/appointment.dart';
-import 'package:fimech/screens/admin/trackformad.dart';
 import 'package:fimech/screens/user/diagnostic.dart';
 import 'package:fimech/screens/user/widgets/verticalstepper.dart'
     as step;
@@ -134,9 +133,29 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(
-                        height: 20,
-                      ),
+                      Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget._appointment.workshopName + " :  " ?? 'No disponible',
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(widget._appointment.workshopAddress ?? 'No disponible'),
+                                  ],
+                                ),
+                              ),
+
+                            ],
+                          ),
+                        ),
+
                       if (steps.isEmpty)
                         const Center(child: Text('No hay información'))
                       else
