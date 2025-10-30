@@ -58,7 +58,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         setState(() {
           var condicion = elemento1.progreso2;
           steps.addAll(_addToStep(elemento1.progreso2, elemento1, null, null,
-              null, condicion, Color(0xFF258EB4)));
+              null, condicion, Colors.green[300]));
         });
       }
       if (paso1Cumplido && elemento2.status2 == 'Diagnostico') {
@@ -66,7 +66,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         setState(() {
           var condicion = elemento2.progreso2;
           steps.addAll(_addToStep(elemento2.progreso2, elemento1, elemento2,
-              null, null, condicion, Color(0xFF258EB4)));
+              null, null, condicion, Colors.green[300]));
         });
       }
       if (paso2Cumplido && elemento3.status2 == 'Reparacion') {
@@ -74,7 +74,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         setState(() {
           var condicion = elemento3.progreso2;
           steps.addAll(_addToStep(elemento3.progreso2, elemento1, elemento2,
-              elemento3, null, condicion, Color(0xFF258EB4)));
+              elemento3, null, condicion, Colors.green[300]));
         });
       }
       if (paso3Cumplido && elemento4.status2 == 'Completado') {
@@ -82,7 +82,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
         setState(() {
           var condicion = elemento4.progreso2;
           steps.addAll(_addToStep(elemento4.progreso2, elemento1, elemento2,
-              elemento3, elemento4, condicion, Color(0xFF258EB4)));
+              elemento3, elemento4, condicion, Colors.green[300]));
         });
       }
     }
@@ -319,7 +319,7 @@ class _TrackDetailsPageState extends State<TrackDetailsPage> {
                         width: 115,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: Color(0xFF258EB4),
+                          color: Colors.green[300],
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(

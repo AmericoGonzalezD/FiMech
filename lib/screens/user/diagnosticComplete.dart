@@ -279,7 +279,7 @@ class _DiagnosticPageCompleteState extends State<DiagnosticPageComplete> {
 List images = [
   "https://autocentermty.com.mx/wp-content/uploads/2021/08/Reparaciones-generales-1024x683.jpg",
   "https://autocentermty.com.mx/wp-content/uploads/2021/01/Mecanica-express-2.jpg",
-  "https://sp-ao.shortpixel.ai/client/to_webp,q_glossy,ret_img,w_1024,h_737/https://carexpress.mx/wp-content/uploads/2020/03/3-1024x737.jpg",
+  "https://www.godoycruz.gob.ar/sitio2/wp-content/uploads/2015/04/mecanica-automotriz-900x600.jpg",
   "https://laopinion.com/wp-content/uploads/sites/3/2019/04/shutterstock_253755247.jpg?w=1200",
   "https://www.apeseg.org.pe/wp-content/uploads/2021/07/GettyImages-1306026621.jpg",
   "https://proautos.com.co/wp-content/uploads/2023/08/10-Ventajas-de-reparar-el-motor-de-tu-auto_1-1080x675.jpg",

@@ -12,7 +12,7 @@ class HomePageAD extends StatefulWidget {
 class _HomePageADState extends State<HomePageAD> {
   int selectedIndex = 0;
 
-  Color selectedColor = Color(0xFF258EB4) ?? Colors.green;
+  Color selectedColor = Colors.green[400] ?? Colors.green;
   Color unselectedColor = Colors.grey[600] ?? Colors.grey;
 
   final screens = [

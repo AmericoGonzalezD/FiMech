@@ -1,13 +1,148 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fimech/screens/user/citeform.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 
-class TalleresScreen extends StatelessWidget {
+class TalleresScreen extends StatefulWidget {
+  const TalleresScreen({super.key});
+  @override
+  State<TalleresScreen> createState() => _TalleresScreenState();
+}
+
+class _TalleresScreenState extends State<TalleresScreen> {
+  final Map<String, String?> _urlCache = {}; // cache docId/raw -> resolved URL or null
+  final Map<String, Uint8List?> _bytesCache = {}; // cache url -> bytes or null
+
+  Future<String?> _resolveImageUrl(dynamic raw, String docId) async {
+    try {
+      final key = '${docId}::${raw ?? ''}';
+      if (_urlCache.containsKey(key)) return _urlCache[key];
+
+      if (raw == null) {
+        _urlCache[key] = null;
+        return null;
+      }
+      if (raw is String && raw.trim().isNotEmpty) {
+        final s = raw.trim();
+        if (s.startsWith('http')) {
+          // Probar variantes de la URL remota para evitar 404 (https/http, www, encoding)
+          final List<String> candidates = [];
+          candidates.add(s);
+          // Force https/http variants
+          if (s.startsWith('https://')) candidates.add(s.replaceFirst('https://', 'http://'));
+          if (s.startsWith('http://')) candidates.add(s.replaceFirst('http://', 'https://'));
+          // Add www variant if missing
+          try {
+            final uri = Uri.parse(s);
+            final host = uri.host;
+            if (!host.startsWith('www.')) {
+              final withWww = uri.replace(host: 'www.$host').toString();
+              candidates.add(withWww);
+            }
+            if (host.startsWith('www.')) {
+              final withoutWww = uri.replace(host: host.replaceFirst('www.', '')).toString();
+              candidates.add(withoutWww);
+            }
+            // Encoded path
+            final encoded = Uri.encodeFull(s);
+            if (encoded != s) candidates.add(encoded);
+          } catch (_) {}
+
+          for (final cand in candidates) {
+            try {
+              final head = await http.head(Uri.parse(cand)).timeout(const Duration(seconds: 6));
+              if (head.statusCode >= 200 && head.statusCode < 400) {
+                _urlCache[key] = cand;
+                // Persistir la variante válida si es distinta de la original
+                if (cand != s) {
+                  try {
+                    await FirebaseFirestore.instance.collection('admin').doc(docId).update({'workshopImageUrl': cand});
+                  } catch (_) {}
+                }
+                return cand;
+              }
+              final get = await http.get(Uri.parse(cand)).timeout(const Duration(seconds: 6));
+              if (get.statusCode >= 200 && get.statusCode < 400) {
+                _urlCache[key] = cand;
+                if (cand != s) {
+                  try {
+                    await FirebaseFirestore.instance.collection('admin').doc(docId).update({'workshopImageUrl': cand});
+                  } catch (_) {}
+                }
+                return cand;
+              }
+            } catch (_) {
+              // ignore and try next candidate
+            }
+          }
+          // Si todas las variantes fallaron, limpiar el campo en Firestore para evitar futuros 404
+          try {
+            await FirebaseFirestore.instance.collection('admin').doc(docId).update({'workshopImageUrl': FieldValue.delete()});
+          } catch (_) {}
+          _urlCache[key] = null;
+          return null;
+        }
+        // Si no es URL HTTP, tratar como ruta de Firebase Storage
+        try {
+          final ref = FirebaseStorage.instance.ref().child(s);
+          final url = await ref.getDownloadURL();
+          // Si obtuvimos un downloadURL válido, persistirlo en Firestore para este taller
+          try {
+            await FirebaseFirestore.instance.collection('admin').doc(docId).update({'workshopImageUrl': url});
+          } catch (_) {}
+          // verificar url
+          try {
+            final head = await http.head(Uri.parse(url)).timeout(const Duration(seconds: 6));
+            if (head.statusCode >= 200 && head.statusCode < 400) {
+              _urlCache[key] = url;
+              return url;
+            }
+            final get = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
+            if (get.statusCode >= 200 && get.statusCode < 400) {
+              _urlCache[key] = url;
+              return url;
+            }
+            _urlCache[key] = null;
+            return null;
+          } catch (_) {
+            _urlCache[key] = null;
+            return null;
+          }
+        } catch (_) {
+          _urlCache[key] = null;
+          return null;
+        }
+      }
+      _urlCache[key] = null;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Uint8List?> _fetchImageBytes(String url) async {
+    try {
+      if (_bytesCache.containsKey(url)) return _bytesCache[url];
+      final resp = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+      if (resp.statusCode >= 200 && resp.statusCode < 400) {
+        _bytesCache[url] = resp.bodyBytes;
+        return resp.bodyBytes;
+      }
+      _bytesCache[url] = null;
+      return null;
+    } catch (_) {
+      _bytesCache[url] = null;
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Talleres'),
+        title: const Text('Talleres', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -38,8 +173,7 @@ class TalleresScreen extends StatelessWidget {
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               DocumentSnapshot document = snapshot.data!.docs[index];
-              Map<String, dynamic> data =
-              document.data()! as Map<String, dynamic>;
+              Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
               return Card(
                 margin: const EdgeInsets.all(5),
                 shape: RoundedRectangleBorder(
@@ -56,15 +190,41 @@ class TalleresScreen extends StatelessWidget {
                           topLeft: Radius.circular(15),
                           topRight: Radius.circular(15),
                         ),
-                        child: Image.network(
-                          data['workshopImageUrl'] ??
-                              'https://via.placeholder.com/150/E0E0E0/808080%20C/O%20https://placeholder.com/',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[300],
-                              child: const Center(
-                                  child: Icon(Icons.store, size: 30)),
+                        child: FutureBuilder<String?>(
+                          future: _resolveImageUrl(data['workshopImageUrl'], document.id),
+                          builder: (context, snap) {
+                            if (snap.connectionState == ConnectionState.waiting) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Center(child: CircularProgressIndicator()),
+                              );
+                            }
+                            final imageUrl = snap.data;
+                            if (imageUrl == null || imageUrl.isEmpty) {
+                              return Container(
+                                color: Colors.grey[300],
+                                child: const Center(child: Icon(Icons.store, size: 30)),
+                              );
+                            }
+                            // Descargar bytes y mostrar con Image.memory para controlar fallos HTTP
+                            return FutureBuilder<Uint8List?>(
+                              future: _fetchImageBytes(imageUrl),
+                              builder: (context, bsnap) {
+                                if (bsnap.connectionState == ConnectionState.waiting) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(child: CircularProgressIndicator()),
+                                  );
+                                }
+                                final bytes = bsnap.data;
+                                if (bytes == null || bytes.isEmpty) {
+                                  return Container(
+                                    color: Colors.grey[300],
+                                    child: const Center(child: Icon(Icons.store, size: 30)),
+                                  );
+                                }
+                                return Image.memory(bytes, fit: BoxFit.cover);
+                              },
                             );
                           },
                         ),
@@ -96,8 +256,7 @@ class TalleresScreen extends StatelessWidget {
                               const SizedBox(width: 2),
                               Expanded(
                                 child: Text(
-                                  data['workshopAddress'] ??
-                                      'Dirección no disponible',
+                                  data['workshopAddress'] ?? 'Dirección no disponible',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: Colors.grey,
@@ -127,13 +286,13 @@ class TalleresScreen extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => CiteForm(
-                                      workshopData: data, // Pasar los datos del taller
+                                      workshopData: {...data, 'id': document.id}, // Pasar los datos del taller e incluir el id
                                     ),
                                   ),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF258EB4),
+                                backgroundColor: Colors.green[300],
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -141,7 +300,7 @@ class TalleresScreen extends StatelessWidget {
                               ),
                               child: const Text(
                                 'Agendar',
-                                style: TextStyle(fontSize: 12),
+                                style: TextStyle(fontSize: 12, color: Colors.black),
                               ),
                             ),
                           ),

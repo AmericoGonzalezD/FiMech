@@ -19,7 +19,40 @@ class DiagnosticPage extends StatefulWidget {
 }
 
 class _DiagnosticPageState extends State<DiagnosticPage> {
+  String? _diagnosticoStatus;
   void setAppointment(Appointment appointment) {}
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDiagnosticoStatus();
+  }
+
+  Future<void> _loadDiagnosticoStatus() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('citas')
+          .doc(widget._appointment.id)
+          .collection('citasDiagnostico')
+          .doc(widget._diagnostico.id)
+          .get();
+      if (doc.exists) {
+        final data = doc.data();
+        // Preferir el campo 'diagnostico' (nuevo), si no existe usar 'status2' (compat)
+        final dyn = (data?['diagnostico'] as String?) ?? (data?['status2'] as String?);
+        setState(() {
+          _diagnosticoStatus = dyn ?? widget._diagnostico.status2;
+        });
+        return;
+      }
+    } catch (_) {
+      // ignore
+    }
+    // Fallback
+    setState(() {
+      _diagnosticoStatus = widget._diagnostico.status2;
+    });
+  }
 
   Future<void> _cancelCite() async {
     await FirebaseFirestore.instance
@@ -27,9 +60,24 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
         .doc(widget._appointment.id)
         .update({'status': 'Cancelado'});
 
+    // Marcar el diagnóstico como rechazado (si existe)
+    try {
+      await FirebaseFirestore.instance
+          .collection('citas')
+          .doc(widget._appointment.id)
+          .collection('citasDiagnostico')
+          .doc(widget._diagnostico.id)
+          .update({'diagnostico': 'Rechazado'});
+      setState(() {
+        _diagnosticoStatus = 'Rechazado';
+      });
+    } catch (_) {
+      // ignore
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('La cita se ha cancelado correctamente'),
+        content: Text('La cotización se ha rechazado correctamente'),
       ),
     );
     setState(() {});
@@ -62,12 +110,22 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
   }
 
   Future<void> _acceptCite() async {
-    await FirebaseFirestore.instance
-        .collection('citas')
-        .doc(widget._appointment.id)
-        .update({
-      'costo': "Aceptado",
-    });
+    // No actualizar 'costo' aquí: 'costo' es el monto monetario.
+    // Actualizamos únicamente el estado del diagnóstico en el subdocumento.
+    // Marcar el diagnóstico como aceptado
+    try {
+      await FirebaseFirestore.instance
+          .collection('citas')
+          .doc(widget._appointment.id)
+          .collection('citasDiagnostico')
+          .doc(widget._diagnostico.id)
+          .update({'diagnostico': 'Aceptado'});
+      setState(() {
+        _diagnosticoStatus = 'Aceptado';
+      });
+    } catch (_) {
+      // ignore
+    }
     String userEmail = await getUserEmail(widget._appointment.userId);
     //String userEmailMecanico = await getUserEmail(widget._appointment.userId);
     EmailSender.sendMailFromGmailDiagnostico(userEmail);
@@ -228,60 +286,88 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
                   ),
                 ],
               ),
-              const SizedBox(
-                height: 18,
-              ),
+              const SizedBox(height: 8),
+              // Mostrar estado del diagnóstico
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  InkWell(
-                    onTap: () {
-                      _cancelCite();
-                    },
-                    child: Container(
-                      width: 150,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "Rechazar cotizacion",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
+                  const Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Estado:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  InkWell(
-                    onTap: () {
-                      _acceptCite();
-                    },
-                    child: Container(
-                      width: 150,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.green[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "Aceptar Cotización",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
+                  Expanded(
+                    flex: 5,
+                    child: Text(
+                      (_diagnosticoStatus != null && _diagnosticoStatus!.isNotEmpty)
+                          ? _diagnosticoStatus!
+                          : 'Pendiente',
+                      style: TextStyle(
+                        color: (_diagnosticoStatus == 'Aceptado'
+                            ? Colors.green[700]
+                            : (_diagnosticoStatus == 'Rechazado' ? Colors.red[700] : Colors.black54)),
                       ),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(
+                height: 18,
+              ),
+              // Mostrar los botones solo si el diagnóstico NO ha sido aceptado/rechazado
+              if (!(_diagnosticoStatus == 'Aceptado' || _diagnosticoStatus == 'Rechazado'))
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        _cancelCite();
+                      },
+                      child: Container(
+                        width: 150,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Rechazar cotizacion",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        _acceptCite();
+                      },
+                      child: Container(
+                        width: 150,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.green[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Aceptar Cotización",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               const SizedBox(
                 height: 14,
               ),
@@ -361,7 +447,7 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
 List images = [
   "https://autocentermty.com.mx/wp-content/uploads/2021/08/Reparaciones-generales-1024x683.jpg",
   "https://autocentermty.com.mx/wp-content/uploads/2021/01/Mecanica-express-2.jpg",
-  "https://sp-ao.shortpixel.ai/client/to_webp,q_glossy,ret_img,w_1024,h_737/https://carexpress.mx/wp-content/uploads/2020/03/3-1024x737.jpg",
+  "https://www.godoycruz.gob.ar/sitio2/wp-content/uploads/2015/04/mecanica-automotriz-900x600.jpg",
   "https://laopinion.com/wp-content/uploads/sites/3/2019/04/shutterstock_253755247.jpg?w=1200",
   "https://www.apeseg.org.pe/wp-content/uploads/2021/07/GettyImages-1306026621.jpg",
   "https://proautos.com.co/wp-content/uploads/2023/08/10-Ventajas-de-reparar-el-motor-de-tu-auto_1-1080x675.jpg",
@@ -380,13 +466,10 @@ class EmailSender {
           '<body style="text-align: center; font-family: Tahoma, Geneva, Verdana, sans-serif;"> <div style="margin:auto; border-radius: 10px; width: 300px; padding: 10px; box-shadow: 1px 1px 1px 1px rgb(174, 174, 174);"> <h2>Confirmacion de aceptación de diagnostico</h2> <p>Ha aceptado el diagnostico de reparacion de su vehiculo. El vehiculo entrará en la lista de reparación de inmediato</p><p>Este al pendiente de las actualizaciones del estatus de su vehiculo.</p></div></body>';
 
     try {
-      final sendReport = await send(message, gmailSmtp);
-      print('Message sent: ' + sendReport.toString());
-    } on MailerException catch (e) {
-      print('Message not sent.');
-      for (var p in e.problems) {
-        print('Problem: ${p.code}: ${p.msg}');
-      }
+      await send(message, gmailSmtp);
+      // Message sent - handled silently or via analytics if needed
+    } on MailerException catch (_) {
+      // Message not sent - error handling/logging can be added here
     }
   }
 
@@ -400,13 +483,10 @@ class EmailSender {
           '<body style="text-align: center; font-family: Tahoma, Geneva, Verdana, sans-serif;"> <div style="margin:auto; border-radius: 10px; width: 300px; padding: 10px; box-shadow: 1px 1px 1px 1px rgb(174, 174, 174);"> <h2>Nueva cotización aceptada</h2> <p>Hola,</p><p>Un nuevo cliente ha aceptado la cotizacipón propuesta.</p><p>Automovil de la cotización aceptada: $auto</p></div></body>';
 
     try {
-      final sendReport = await send(message, gmailSmtp);
-      print('Message sent: ' + sendReport.toString());
-    } on MailerException catch (e) {
-      print('Message not sent.');
-      for (var p in e.problems) {
-        print('Problem: ${p.code}: ${p.msg}');
-      }
+      await send(message, gmailSmtp);
+      // Message sent - handled silently or via analytics if needed
+    } on MailerException catch (_) {
+      // Message not sent - error handling/logging can be added here
     }
   }
 }

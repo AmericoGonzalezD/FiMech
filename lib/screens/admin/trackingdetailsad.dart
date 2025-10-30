@@ -65,7 +65,7 @@ class _TrackDetailsPageADState extends State<TrackDetailsPageAD> {
         setState(() {
           var condicion = elemento1.progreso2;
           steps.addAll(_addToStep(elemento1.progreso2, elemento1, null, null,
-              null, condicion, Color(0xFF258EB4)));
+              null, condicion, Colors.green[300]));
         });
       }
       if (paso1Cumplido && elemento2.status2 == 'Diagnostico') {
@@ -73,7 +73,7 @@ class _TrackDetailsPageADState extends State<TrackDetailsPageAD> {
         setState(() {
           var condicion = elemento2.progreso2;
           steps.addAll(_addToStep(elemento2.progreso2, elemento1, elemento2,
-              null, null, condicion, Color(0xFF258EB4)));
+              null, null, condicion, Colors.green[300]));
         });
       }
       if (paso2Cumplido && elemento3.status2 == 'Reparacion') {
@@ -81,7 +81,7 @@ class _TrackDetailsPageADState extends State<TrackDetailsPageAD> {
         setState(() {
           var condicion = elemento3.progreso2;
           steps.addAll(_addToStep(elemento3.progreso2, elemento1, elemento2,
-              elemento3, null, condicion, Color(0xFF258EB4)));
+              elemento3, null, condicion, Colors.green[300]));
         });
       }
       if (paso3Cumplido && elemento4.status2 == 'Completado') {
@@ -89,7 +89,7 @@ class _TrackDetailsPageADState extends State<TrackDetailsPageAD> {
         setState(() {
           var condicion = elemento4.progreso2;
           steps.addAll(_addToStep(elemento4.progreso2, elemento1, elemento2,
-              elemento3, elemento4, condicion, Color(0xFF258EB4)));
+              elemento3, elemento4, condicion, Colors.green[300]));
         });
       }
     }
@@ -114,7 +114,10 @@ class _TrackDetailsPageADState extends State<TrackDetailsPageAD> {
                 ), // Título de la barra de aplicación
               ),
               bottomNavigationBar: userPhoneNumber == null
-                  ? CircularProgressIndicator() // O algún widget de carga
+                  ? const SizedBox(
+                      height: 60,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
                   : WhatsappButtonAD(widget._appointment.id, widget._appointment.auto, userPhoneNumber!),
               body: SafeArea(
                 child: SingleChildScrollView(
@@ -157,7 +160,7 @@ class _TrackDetailsPageADState extends State<TrackDetailsPageAD> {
               floatingActionButton: Padding(
                 padding: const EdgeInsets.only(bottom: 20),
                 child: FloatingActionButton(
-                  backgroundColor: Color(0xFF258EB4),
+                  backgroundColor: Colors.green[300],
                   onPressed: () {
                     _openTrackingDetailsForm(context, widget._appointment,
                         elemento1, elemento2, elemento3);
@@ -339,7 +342,7 @@ class _TrackDetailsPageADState extends State<TrackDetailsPageAD> {
                         width: 115,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: Color(0xFF258EB4),
+                          color: Colors.green[300],
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(

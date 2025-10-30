@@ -38,7 +38,7 @@ class ProfileData extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8,),
-            Icon(icon, size: 18,color: Color(0xFF258EB4),),
+            Icon(icon, size: 18,color: Colors.green[300],),
           ],
         ),
       ),

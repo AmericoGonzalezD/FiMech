@@ -87,7 +87,7 @@ class _SchedulePageState extends State<SchedulePage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           color: _buttonIndex == 0
-                              ? Color(0xFF258EB4)
+                              ? Colors.green[300]
                               : Colors.grey[100],
                         ),
                         child: Text("Próximas",
@@ -113,7 +113,7 @@ class _SchedulePageState extends State<SchedulePage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           color: _buttonIndex == 1
-                              ? Color(0xFF258EB4)
+                              ? Colors.green[300]
                               : Colors.grey[100],
                         ),
                         child: Text("Completadas",
@@ -139,7 +139,7 @@ class _SchedulePageState extends State<SchedulePage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           color: _buttonIndex == 2
-                              ? Color(0xFF258EB4)
+                              ? Colors.green[300]
                               : Colors.grey[100],
                         ),
                         child: Text(
@@ -168,14 +168,14 @@ class _SchedulePageState extends State<SchedulePage> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: FloatingActionButton(
-          backgroundColor: Color(0xFF258EB4),
+          backgroundColor: Colors.green[300],
           onPressed: () {
             Navigator.push(
               // Navega a la página de notificaciones (NotifiesPage)
               context,
               MaterialPageRoute(
                   builder: (context) =>
-                      const CiteForm()), // Crea una ruta para la página de notificaciones
+                      const CiteForm(workshopData: {},)), // Crea una ruta para la página de notificaciones
             );
           },
           child: const Icon(Icons.add, color: Colors.white),

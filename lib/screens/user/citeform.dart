@@ -1,14 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fimech/services/appointment_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server/gmail.dart';
 import 'package:fimech/screens/user/home.dart';
 import 'package:fimech/screens/user/widgets/sectionheading.dart';
+import 'package:fimech/services/appointment_service.dart';
 
 class CiteForm extends StatefulWidget {
   final Map<String, dynamic>? workshopData;
-
-  const CiteForm({super.key, this.workshopData});
+  const CiteForm({super.key, required this.workshopData});
 
   @override
   State<CiteForm> createState() => _CiteFormState();
@@ -16,40 +18,20 @@ class CiteForm extends StatefulWidget {
 
 class _CiteFormState extends State<CiteForm> {
   late String userId;
-  String? selectedWorkshopName;
-  String? workshopAddress;
-  String? _mechanicId; // Usamos un guion bajo para indicar que es privado
-  final TextEditingController _workshopAddressController =
-  TextEditingController();
-  List<Map<String, dynamic>> workshops = [];
+  // Lista de talleres disponibles
+  List<Map<String, String>> _workshops = [];
+  bool _isLoadingWorkshops = false;
+  String? _selectedWorkshopId; // id del taller seleccionado
+  String? _selectedWorkshopName;
+  String? _selectedWorkshopAddress;
+  // Preferencia del usuario
+  String? _userPreferredWorkshopId;
+  String? _userPreferredWorkshopName;
 
   @override
   void initState() {
     super.initState();
     getUserId();
-    _loadWorkshops();
-    if (widget.workshopData != null) {
-      selectedWorkshopName = widget.workshopData!['workshopName'];
-      workshopAddress = widget.workshopData!['workshopAddress'];
-      _mechanicId = widget.workshopData!['uid']; // Obtener el ID del mecánico si se pasa
-      _workshopAddressController.text = workshopAddress ?? '';
-    }
-  }
-
-  Future<void> _loadWorkshops() async {
-    try {
-      QuerySnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
-          .instance
-          .collection('admin')
-          .where('isMechanic', isEqualTo: true)
-          .get();
-      setState(() {
-        workshops = snapshot.docs.map((doc) => doc.data()).toList();
-      });
-    } catch (e) {
-      print("Error loading workshops: $e");
-      // Handle error appropriately
-    }
   }
 
   Future<void> getUserId() async {
@@ -58,8 +40,85 @@ class _CiteFormState extends State<CiteForm> {
       setState(() {
         userId = user.uid;
       });
+      // Cargar preferencia del usuario y talleres disponibles
+      await _loadUserPreferredWorkshop();
+      await _loadWorkshops();
+      // Si se pasó workshopData desde la pantalla de Talleres, úsalo como predeterminado
+      if (widget.workshopData != null && widget.workshopData!['id'] != null) {
+        final wid = widget.workshopData!['id'] as String;
+        _selectedWorkshopId = wid;
+        _selectedWorkshopName = widget.workshopData!['workshopName'] as String? ?? widget.workshopData!['name'] as String?;
+        _selectedWorkshopAddress = widget.workshopData!['workshopAddress'] as String? ?? '';
+      }
     } else {
       userId = '';
+    }
+  }
+
+  Future<void> _loadUserPreferredWorkshop() async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('client').doc(userId).get();
+      if (doc.exists) {
+        final data = doc.data();
+        _userPreferredWorkshopId = (data?['preferredWorkshopId'] as String?) ?? '';
+        _userPreferredWorkshopName = (data?['preferredWorkshopName'] as String?) ?? '';
+        // Inicialmente seleccionar la preferencia del usuario
+        if ((_userPreferredWorkshopId ?? '').isNotEmpty) {
+          _selectedWorkshopId = _userPreferredWorkshopId;
+          _selectedWorkshopName = _userPreferredWorkshopName;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando preferencia de taller del usuario: $e');
+    }
+    setState(() {});
+  }
+
+  Future<void> _loadWorkshops() async {
+    setState(() {
+      _isLoadingWorkshops = true;
+    });
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('admin')
+          .where('isMechanic', isEqualTo: true)
+          .get();
+      _workshops = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'name': (data['workshopName'] ?? data['name'] ?? 'Taller sin nombre') as String,
+          'address': (data['workshopAddress'] ?? '') as String,
+        };
+      }).toList();
+
+      // Si no hay selección pero el usuario tiene preferencia, intentar poblarla con la info de la lista
+      if ((_selectedWorkshopId ?? '').isNotEmpty) {
+        final sel = _workshops.firstWhere(
+            (w) => w['id'] == _selectedWorkshopId,
+            orElse: () => {});
+        if (sel.isNotEmpty) {
+          _selectedWorkshopName = sel['name'];
+          _selectedWorkshopAddress = sel['address'];
+        }
+      }
+      // Si no se seleccionó ningún taller pero la pantalla fue abierta desde TalleresScreen con data, aplicar la selección ahora
+      if ((_selectedWorkshopId ?? '').isEmpty && widget.workshopData != null && widget.workshopData!['id'] != null) {
+        final wid = widget.workshopData!['id'] as String;
+        final sel2 = _workshops.firstWhere((w) => w['id'] == wid, orElse: () => {});
+        if (sel2.isNotEmpty) {
+          _selectedWorkshopId = sel2['id'];
+          _selectedWorkshopName = sel2['name'];
+          _selectedWorkshopAddress = sel2['address'];
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando talleres: $e');
+      _workshops = [];
+    } finally {
+      setState(() {
+        _isLoadingWorkshops = false;
+      });
     }
   }
 
@@ -86,7 +145,7 @@ class _CiteFormState extends State<CiteForm> {
 
   Future<String> getUserEmail(String userId) async {
     var userDoc =
-    await FirebaseFirestore.instance.collection('client').doc(userId).get();
+        await FirebaseFirestore.instance.collection('client').doc(userId).get();
     if (userDoc.exists) {
       return userDoc.data()!['email'];
     } else {
@@ -140,8 +199,7 @@ class _CiteFormState extends State<CiteForm> {
       }
     }
   }
-
-  //Configuración de limite de agendar hora
+//Configuración de limite de agendar hora
   bool _isTimeInRange(TimeOfDay time, TimeOfDay startTime, TimeOfDay endTime) {
     final int hour = time.hour;
     final int minute = time.minute;
@@ -165,7 +223,7 @@ class _CiteFormState extends State<CiteForm> {
 
   Future<String> IdCiti(String userId) async {
     var citiId =
-    await AppointmentService().getAppointmentTraking(userId, "Pendiente");
+        await AppointmentService().getAppointmentTraking(userId, "Pendiente");
     return citiId.id;
   }
 
@@ -179,80 +237,13 @@ class _CiteFormState extends State<CiteForm> {
         _selectedTime.hour,
         _selectedTime.minute,
       );
-
-      // Obtener el ID del mecánico aquí de forma síncrona
-      if (selectedWorkshopName != null) {
-        QuerySnapshot snapshot = await FirebaseFirestore.instance
-            .collection('admin')
-            .where('isMechanic', isEqualTo: true)
-            .where('workshopName', isEqualTo: selectedWorkshopName)
-            .get();
-
-        if (snapshot.docs.isNotEmpty) {
-          _mechanicId = snapshot.docs.first.id;
-          print('ID del mecánico seleccionado: $_mechanicId');
-        } else {
-          _mechanicId = null;
-          print('No se encontró ningún mecánico con el nombre: $selectedWorkshopName');
-          // Puedes mostrar un error al usuario si no se encuentra el mecánico
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error: No se pudo encontrar el mecánico seleccionado.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          return; // Detener el proceso de guardado si no se encuentra el mecánico
-        }
-      } else {
-        // Si no se ha seleccionado ningún taller, también detener el proceso
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Por favor, seleccione un taller.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      // Verificar si ya existe una cita en la misma fecha y hora
-      QuerySnapshot existingAppointments = await FirebaseFirestore.instance
-          .collection('citas')
-          .where('date', isEqualTo: dateTime)
-          .get();
-
-      if (existingAppointments.docs.isNotEmpty) {
-        // Mostrar alerta si ya hay una cita en ese horario
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Cita no disponible'),
-              content: const Text(
-                  'Ya existe una cita agendada en esta fecha y hora. Por favor, elige otro horario.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Aceptar'),
-                ),
-              ],
-            );
-          },
-        );
-        return; // Detener el proceso de guardado
-      }
-
-      // Si no hay citas en esa fecha y hora, proceder con la creación
       DocumentReference appointmentRef =
-      await FirebaseFirestore.instance.collection('citas').add({
+          await FirebaseFirestore.instance.collection('citas').add({
         'userId': userId,
         'automovil': _model,
         'date': dateTime,
         'motivo': _reason,
         'status': 'Pendiente',
-        'workshopName': selectedWorkshopName,
-        'workshopAddress': _workshopAddressController.text,
         'status2': 'Pendiente',
         'reason': 'Evaluando proceso',
         'reason2': 'Evaluando proceso',
@@ -260,7 +251,9 @@ class _CiteFormState extends State<CiteForm> {
         'progreso2': '',
         'date_update': dateTime,
         'costo': "",
-        'idMecanico': _mechanicId, // Usar el _mechanicId obtenido
+        'idMecanico': _selectedWorkshopId ?? '',
+        'workshopName': _selectedWorkshopName ?? '',
+        'workshopAddress': _selectedWorkshopAddress ?? '',
         'descriptionService': "",
       });
 
@@ -302,14 +295,16 @@ class _CiteFormState extends State<CiteForm> {
         'descriptionService': "",
         'status2': '',
       }, SetOptions(merge: true));
+// Obtener el email del usuario
 
-      // Obtener el email del usuario
       String userEmail = await getUserEmail(userId);
+
+      EmailSender.sendMailFromGmail(userEmail);
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const HomePage(),
+          builder: (context) => HomePage(),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -325,7 +320,7 @@ class _CiteFormState extends State<CiteForm> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Agendar Cita',
+          'Agendar',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -336,78 +331,28 @@ class _CiteFormState extends State<CiteForm> {
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SectionHeading(
                     title: "Detalles de la cita",
                     showActionButton: false,
                   ),
-                  const SizedBox(height: 30),
-                  const Text(
-                    "Taller seleccionado:",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  const SizedBox(
+                    height: 30,
                   ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      hintText: 'Seleccione un taller',
-                      border: OutlineInputBorder(),
-                    ),
-                    value: selectedWorkshopName,
-                    items: workshops.map((workshop) {
-                      return DropdownMenuItem<String>(
-                        value: workshop['workshopName'],
-                        child: Text(
-                            workshop['workshopName'] ?? 'Nombre no disponible'),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedWorkshopName = newValue;
-                        workshopAddress = workshops.firstWhere(
-                              (workshop) => workshop['workshopName'] == newValue,
-                          orElse: () => {},
-                        )['workshopAddress'];
-                        _workshopAddressController.text = workshopAddress ?? '';
-                        _mechanicId = null; // Resetear el ID del mecánico al cambiar de taller
-                      });
-                      // Ya no necesitas la consulta aquí, se realizará en _saveCite
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, seleccione un taller';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "Dirección del taller:",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    controller: _workshopAddressController,
-                    readOnly: true, // La dirección se rellena automáticamente
-                    decoration: const InputDecoration(
-                      hintText: 'La dirección del taller se mostrará aquí',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                   Container(
                     alignment: Alignment.centerLeft,
                     child: const Text(
                       "Ingresa el modelo de automovil:",
                       style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(
+                    height: 6,
+                  ),
                   TextFormField(
                     decoration: const InputDecoration(
                         hintText: 'Modelo del automóvil',
-                        border: OutlineInputBorder(),
                         hintStyle: TextStyle(fontSize: 14)),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -417,20 +362,23 @@ class _CiteFormState extends State<CiteForm> {
                     },
                     onSaved: (value) => _model = value!,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(
+                    height: 24,
+                  ),
                   Container(
                     alignment: Alignment.centerLeft,
                     child: const Text(
                       "Ingresa el motivo:",
                       style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(
+                    height: 6,
+                  ),
                   TextFormField(
                     decoration: const InputDecoration(
                         hintText: 'Motivo de la cita',
-                        border: OutlineInputBorder(),
                         hintStyle: TextStyle(fontSize: 14)),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -440,16 +388,67 @@ class _CiteFormState extends State<CiteForm> {
                     },
                     onSaved: (value) => _reason = value!,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(
+                    height: 24,
+                  ),
+
+                  // Dropdown para seleccionar taller
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      "Selecciona el taller:",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _isLoadingWorkshops
+                      ? const SizedBox(height: 40, child: Center(child: CircularProgressIndicator()))
+                      : DropdownButtonFormField<String>(
+                    initialValue: _selectedWorkshopId == '' ? null : _selectedWorkshopId,
+                    hint: const Text('Seleccione un taller o Ninguno'),
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: '',
+                        child: Text('Ninguno'),
+                      ),
+                      ..._workshops.map((w) => DropdownMenuItem<String>(
+                        value: w['id'],
+                        child: Text(w['name'] ?? 'Taller'),
+                      )),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedWorkshopId = value ?? '';
+                        if ((_selectedWorkshopId ?? '').isEmpty) {
+                          _selectedWorkshopName = '';
+                          _selectedWorkshopAddress = '';
+                        } else {
+                          final sel = _workshops.firstWhere((e) => e['id'] == _selectedWorkshopId, orElse: () => {});
+                          if (sel.isNotEmpty) {
+                            _selectedWorkshopName = sel['name'];
+                            _selectedWorkshopAddress = sel['address'];
+                          } else {
+                            _selectedWorkshopName = '';
+                            _selectedWorkshopAddress = '';
+                          }
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(
+                    height: 24,
+                  ),
                   Container(
                     alignment: Alignment.centerLeft,
                     child: const Text(
                       "Ingresa el día y hora:",
                       style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(
+                    height: 6,
+                  ),
                   Row(
                     children: [
                       Expanded(
@@ -460,7 +459,9 @@ class _CiteFormState extends State<CiteForm> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(
+                        width: 10,
+                      ),
                       Expanded(
                         child: TextButton(
                           onPressed: _selectTime,
@@ -471,7 +472,10 @@ class _CiteFormState extends State<CiteForm> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
+
+                  const SizedBox(
+                    height: 30,
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -501,14 +505,15 @@ class _CiteFormState extends State<CiteForm> {
                       InkWell(
                         onTap: () async {
                           await _saveCite();
+                          //sendMail();
                           setState(
-                                  () {}); // Actualiza la pantalla después de guardar la cita
+                              () {}); // Actualiza la pantalla después de guardar la cita
                         },
                         child: Container(
                           width: 150,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF258EB4),
+                            color: Colors.green[300],
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Center(
@@ -532,5 +537,27 @@ class _CiteFormState extends State<CiteForm> {
         ),
       ),
     );
+  }
+}
+/*Metodo para mandar correo al momento de agendar una cita*/
+
+class EmailSender {
+  static final gmailSmtp =
+      gmail(dotenv.env["GMAIL_EMAIL"]!, dotenv.env["GMAIL_PASSWORD"]!);
+
+  static Future<void> sendMailFromGmail(String userEmail) async {
+    final message = Message()
+      ..from = Address(dotenv.env["GMAIL_EMAIL"]!, 'MechanicTracking')
+      ..recipients.add(userEmail)
+      ..subject = 'Confirmación de cita'
+      ..html =
+          '<body style="text-align: center; font-family: Tahoma, Geneva, Verdana, sans-serif;"> <div style="margin:auto; border-radius: 10px; width: 300px; padding: 10px; box-shadow: 1px 1px 1px 1px rgb(174, 174, 174);"> <h2>Hola, se ha agendado la cita en la lista de espera del taller mecanico</h2> <p>Espere a nuevas actualizaciones para saber sobre su estatus</p></div></body>';
+
+    try {
+      final sendReport = await send(message, gmailSmtp);
+      // Message sent
+     } on MailerException catch (e) {
+      // Message not sent - handle or log as needed
+     }
   }
 }

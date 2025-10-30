@@ -48,7 +48,7 @@ class _UpcomingScheduleADState extends State<UpcomingScheduleAD> {
         return Appointment.fromJson(doc.id, doc.data()!);
       }).toList();
     } catch (e) {
-      print("Error fetching pending appointments for mechanic: $e");
+      // Error fetching pending appointments for mechanic
       return []; // Devolver una lista vacía en caso de error
     }
   }
@@ -300,7 +300,7 @@ class _CardAppointmentState extends State<CardAppointment> {
                       width: 150,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: Color(0xFF258EB4),
+                        color: Colors.green[300],
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Center(

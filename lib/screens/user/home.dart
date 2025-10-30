@@ -15,7 +15,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int selectedIndex = 0; // Índice del elemento seleccionado en la barra de navegación inferior
+  int selectedIndex =
+      0; // Índice del elemento seleccionado en la barra de navegación inferior
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +28,11 @@ class _HomePageState extends State<HomePage> {
       TrackingPage(),
       //ChatPage(),
       ProfilePage2()
-
     ];
 
-    Color selectedColor = const Color(0xFF258EB4); // Color del elemento seleccionado en la barra de navegación inferior
-    Color unselectedColor = Colors.grey[600]!; // Color del elemento no seleccionado en la barra de navegación inferior
+    Color selectedColor = Colors.green[300]!; // Color del elemento seleccionado en la barra de navegación inferior
+    Color unselectedColor = Colors.grey[
+        600]!; // Color del elemento no seleccionado en la barra de navegación inferior
 
     return Scaffold(
       // Crea una nueva instancia de la clase Scaffold
@@ -51,8 +52,10 @@ class _HomePageState extends State<HomePage> {
         },
         elevation: 10, // Sombra del elemento
         selectedItemColor: selectedColor, // Color del elemento seleccionado
-        unselectedItemColor: unselectedColor, // Color del elemento no seleccionado
-        backgroundColor: Colors.white.withOpacity(1), // Fondo de la barra de navegación inferior
+        unselectedItemColor:
+            unselectedColor, // Color del elemento no seleccionado
+        backgroundColor: Colors.white
+            .withOpacity(1), // Fondo de la barra de navegación inferior
         items: const <BottomNavigationBarItem>[
           //Elementos de la barra de navegación inferior
           // BottomNavigationBarItem(
@@ -63,8 +66,8 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.calendar_month), // Icono del elemento
             label: 'Citas', // Etiqueta del elemento
           ),
-          BottomNavigationBarItem( // Nuevo ítem para Talleres
-            icon: Icon(Icons.store), // Puedes elegir otro icono como Icons.workspaces_outlined
+          BottomNavigationBarItem(
+            icon: Icon(Icons.store), // Icono para Talleres
             label: 'Talleres',
           ),
           BottomNavigationBarItem(

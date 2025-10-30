@@ -30,7 +30,7 @@ class AppointmentService {
       //se agrega la cita que viene en cada doc en su data a mi lista de citas appointment
       appointment.add(doc.data());
     }
-    //refresa un future value de la lista de libros obtenida
+    //refesa un future value de la lista de libros obtenida
     return Future.value(appointment);
   }
 
@@ -84,7 +84,7 @@ class AppointmentService {
     for (var doc in result.docs) {
       appointments.add(doc.data());
     }
-    //refresa un future value de la lista de libros obtenida
+    //refesa un future value de la lista de libros obtenida
     return Future.value(appointments);
   }
 
@@ -95,7 +95,7 @@ class AppointmentService {
     for (var doc in result.docs) {
       appointments.add(doc.data());
     }
-    //refresa un future value de la lista de libros obtenida
+    //refesa un future value de la lista de libros obtenida
     return Future.value(appointments);
   }
 
@@ -129,7 +129,23 @@ Future<String?> getUserPhoneNumber(String userId) async {
     }
     return null;
   } catch (e) {
-    print('Error al obtener el número de teléfono: $e');
+    // Error al obtener el número de teléfono: manejar silenciosamente o loguear con un logger si se desea
+    return null;
+  }
+}
+
+// Obtener el email del usuario a partir de su userId
+Future<String?> getUserEmail(String userId) async {
+  try {
+    DocumentSnapshot userDoc =
+        await FirebaseFirestore.instance.collection('client').doc(userId).get();
+    if (userDoc.exists) {
+      var data = userDoc.data() as Map<String, dynamic>?;
+      return data?['email'] as String?;
+    }
+    return null;
+  } catch (e) {
+    // Error al obtener el email del usuario
     return null;
   }
 }

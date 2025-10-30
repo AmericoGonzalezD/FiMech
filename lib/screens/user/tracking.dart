@@ -81,7 +81,7 @@ class _TrackingPageState extends State<TrackingPage> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: _buttonIndex == 0
-                                  ? Color(0xFF258EB4)
+                                  ? Colors.green[300]
                                   : Colors.grey[100],
                             ),
                             child: Text("Actuales",
@@ -106,7 +106,7 @@ class _TrackingPageState extends State<TrackingPage> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: _buttonIndex == 1
-                                  ? Color(0xFF258EB4)
+                                  ? Colors.green[300]
                                   : Colors.grey[100],
                             ),
                             child: Text("Completados",

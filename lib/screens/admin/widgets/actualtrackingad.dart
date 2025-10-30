@@ -229,7 +229,7 @@ class _CardAppointmentState extends State<CardAppointment> {
                         width: 300,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: Color(0xFF258EB4),
+                          color: Colors.green[300],
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(

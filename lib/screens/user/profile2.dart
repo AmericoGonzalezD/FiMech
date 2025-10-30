@@ -8,7 +8,8 @@ import 'package:fimech/screens/user/home.dart';
 import 'package:fimech/screens/user/widgets/circularimage.dart';
 import 'package:fimech/screens/user/widgets/profiledata.dart';
 import 'package:fimech/screens/user/widgets/sectionheading.dart';
-import 'package:fimech/screens/user/widgets/whatsappbutton.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfilePage2 extends StatefulWidget {
   ProfilePage2({super.key});
@@ -18,8 +19,93 @@ class ProfilePage2 extends StatefulWidget {
 }
 
 class _ProfilePage2State extends State<ProfilePage2> {
-  String? _photoUrl;
   Map<String, dynamic>? _userData;
+  // Lista de talleres disponibles (id + name + address opcional)
+  List<Map<String, String>> _availableWorkshops = [];
+  bool _loadingWorkshops = false;
+  String? _selectedWorkshopId;
+  String? _selectedWorkshopName;
+  // Indica si el usuario actual es administrador (true) o no (false). Null mientras se comprueba.
+  bool? _isAdminUser;
+  bool _uploadingPhoto = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkshops();
+    _checkIsAdmin();
+  }
+
+  Future<void> _loadWorkshops() async {
+    setState(() {
+      _loadingWorkshops = true;
+    });
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('admin')
+          .where('isMechanic', isEqualTo: true)
+          .get();
+      _availableWorkshops = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'name': (data['workshopName'] ?? data['name'] ?? 'Taller sin nombre') as String,
+          'address': (data['workshopAddress'] ?? '') as String,
+        };
+      }).toList();
+    } catch (e) {
+      // Error cargando talleres
+      _availableWorkshops = [];
+    } finally {
+      setState(() {
+        _loadingWorkshops = false;
+      });
+    }
+  }
+
+  // Comprueba si el usuario actual existe en la colección 'admin' (por convención, los admins se guardan ahí)
+  Future<void> _checkIsAdmin() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => _isAdminUser = false);
+      return;
+    }
+    try {
+      final doc = await FirebaseFirestore.instance.collection('admin').doc(user.uid).get();
+      setState(() {
+        _isAdminUser = doc.exists;
+      });
+    } catch (e) {
+      // Error comprobando rol admin
+      setState(() => _isAdminUser = false);
+    }
+  }
+
+  Future<void> _updatePreferredWorkshop(String? id, String? name) async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('client').doc(user.uid).update({
+        'preferredWorkshopId': id ?? '',
+        'preferredWorkshopName': name ?? 'Ninguno',
+      });
+      setState(() {
+        _selectedWorkshopId = id;
+        _selectedWorkshopName = name;
+        _userData ??= {};
+        _userData!['preferredWorkshopId'] = id ?? '';
+        _userData!['preferredWorkshopName'] = name ?? 'Ninguno';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Preferencia de taller guardada')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al guardar preferencia: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -73,6 +159,39 @@ class _ProfilePage2State extends State<ProfilePage2> {
                     }
                     // Actualiza el valor de _userData con los datos del usuario
                     _userData = snapshot.data!.data();
+
+                    // Valor para mostrar (nombre del taller preferido)
+                    final String currentWorkshopName = (_userData?['preferredWorkshopName'] as String?) ?? (_selectedWorkshopName ?? 'Ninguno');
+
+                    Widget workshopControl;
+                    if (_loadingWorkshops || _isAdminUser == null) {
+                      // Mostrar el valor en un ProfileData mientras se resuelve la carga/rol
+                      workshopControl = ProfileData(
+                        title: 'Taller preferido',
+                        value: _loadingWorkshops ? 'Cargando...' : currentWorkshopName,
+                        onPressed: () {},
+                        icon: Icons.hourglass_top,
+                      );
+                    } else if (_isAdminUser == true) {
+                      // Admin: mostrar en lectura (no permitir cambios)
+                      workshopControl = ProfileData(
+                        title: 'Taller preferido',
+                        value: currentWorkshopName,
+                        onPressed: () {}, // inactivo para admins
+                        icon: Icons.lock,
+                      );
+                    } else {
+                      // Usuario normal: mostrar ProfileData que abre un modal para cambiar
+                      workshopControl = ProfileData(
+                        title: 'Taller preferido',
+                        value: currentWorkshopName,
+                        onPressed: () async {
+                          await _showSelectPreferredWorkshop();
+                        },
+                        icon: Icons.edit,
+                      );
+                    }
+
                     return Column(
                       children: [
                         SizedBox(
@@ -81,27 +200,25 @@ class _ProfilePage2State extends State<ProfilePage2> {
                             children: [
                               CircularImage(
                                 image: _userData?['image'] ??
-                                    'https://static.vecteezy.com/system/resources/previews/019/879/198/non_2x/user-icon-on-transparent-background-free-png.png',
+                                    'https://img.freepik.com/vector-premium/perfil-hombre-dibujos-animados_18591-58483.jpg',
                                 width: 140,
                                 height: 140,
                               ),
-                              TextButton(
+                               /*TextButton(
                                 onPressed: () async {
-                                  final pickedFile = await picker.pickImage(
-                                      source: ImageSource
-                                          .gallery); // Permite al usuario seleccionar una foto de la galería
-                                  if (pickedFile != null) {
-                                    setState(() {
-                                      _photoUrl = pickedFile
-                                          .path; // Actualiza la URL de la foto seleccionada
-                                    });
-                                  }
+                                  await _pickAndUploadImage();
                                 },
-                                child: const Text(
-                                  'Cambiar foto de perfil',
-                                  style: TextStyle(color: Color(0xFF258EB4)),
-                                ),
-                              ),
+                                child: _uploadingPhoto
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : Text(
+                                        'Cambiar foto de perfil',
+                                        style: TextStyle(color: Colors.green[400]),
+                                      ),
+                              ),*/
                             ],
                           ),
                         ),
@@ -163,6 +280,9 @@ class _ProfilePage2State extends State<ProfilePage2> {
                             );
                           },
                         ),
+                        const SizedBox(height: 8),
+                        // Dropdown para seleccionar taller preferido dentro de la sección "Informacion de Usuario"
+
                         ProfileData(
                             title: 'User ID',
                             value: _userData?['uid'] ?? 'N/A',
@@ -179,10 +299,21 @@ class _ProfilePage2State extends State<ProfilePage2> {
                         const SizedBox(
                           height: 8,
                         ),
-                        const Divider(),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+
+                              const SizedBox(height: 6),
+                              workshopControl,
+                            ],
+                          ),
+                        ),
                         const SizedBox(
                           height: 16,
                         ),
+                        const Divider(),
                         const SectionHeading(
                           title: "Informacion Personal",
                           showActionButton: false,
@@ -301,5 +432,99 @@ class _ProfilePage2State extends State<ProfilePage2> {
         ),
       ),
     );
+  }
+
+  // Muestra modal con la lista de talleres para seleccionar el preferido
+  Future<void> _showSelectPreferredWorkshop() async {
+    // Asegurarse de que la lista de talleres está cargada
+    if (_availableWorkshops.isEmpty && !_loadingWorkshops) {
+      await _loadWorkshops();
+    }
+
+    if (_loadingWorkshops) {
+      // Si sigue cargando, esperar un poco o mostrar indicador
+      return showDialog(
+        context: context,
+        builder: (context) => const AlertDialog(
+          content: SizedBox(height: 60, child: Center(child: CircularProgressIndicator())),
+        ),
+      );
+    }
+
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        if (_availableWorkshops.isEmpty) {
+          return const SizedBox(height: 200, child: Center(child: Text('No hay talleres disponibles')));
+        }
+        return SizedBox(
+          height: 400,
+          child: ListView(
+            children: [
+              ListTile(
+                title: const Text('Ninguno'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await _updatePreferredWorkshop('', 'Ninguno');
+                },
+              ),
+              const Divider(),
+              ..._availableWorkshops.map((w) => ListTile(
+                    title: Text(w['name'] ?? 'Taller'),
+                    subtitle: (w['address'] ?? '').isNotEmpty ? Text(w['address'] ?? '') : null,
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      await _updatePreferredWorkshop(w['id'], w['name']);
+                    },
+                  )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    try {
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+      if (pickedFile == null) return;
+
+      setState(() {
+        _uploadingPhoto = true;
+      });
+
+      final File file = File(pickedFile.path);
+      final User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() => _uploadingPhoto = false);
+        return;
+      }
+
+      final String storagePath = 'user_photos/${user.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final ref = FirebaseStorage.instance.ref().child(storagePath);
+
+      final uploadTask = ref.putFile(file);
+      final snapshot = await uploadTask.whenComplete(() {});
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      // Guardar URL en Firestore en el documento del cliente
+      await FirebaseFirestore.instance.collection('client').doc(user.uid).update({
+        'image': downloadUrl,
+      });
+
+      setState(() {
+        _userData ??= {};
+        _userData!['image'] = downloadUrl;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto de perfil actualizada')));
+    } catch (e) {
+      debugPrint('Error subiendo foto: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al subir la foto: $e')));
+    } finally {
+      setState(() {
+        _uploadingPhoto = false;
+      });
+    }
   }
 }
