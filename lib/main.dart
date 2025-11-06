@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:fimech/router.dart';
 
 
 // Función principal que se ejecuta cuando se inicia la aplicación
@@ -32,6 +33,8 @@ class MyApp extends StatelessWidget {
           // Establece la densidad visual de la aplicación
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
+        // Registrar observer para navegación
+        navigatorObservers: [routeObserver],
         // Establece la página de inicio de sesión como la pantalla de inicio de la aplicación
         home: AuthenticationWrapper(),
       );

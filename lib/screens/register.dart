@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fimech/screens/login.dart'; // Importa la pantalla de inicio de sesión.
 import 'package:fimech/widgets/utils.dart'; // Importa utilidades personalizadas.
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fimech/screens/user/home.dart';
+import 'package:fimech/screens/admin/homead.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -61,13 +64,24 @@ class _RegisterPageState extends State<RegisterPage> {
             'uid': user.uid,
             'name': _nameController.text,
             'email': _emailController.text,
+            'password': _passwordController.text,
           });
         } else {
           await FirebaseFirestore.instance.collection('client').doc(user.uid).set({
             'uid': user.uid,
             'name': _nameController.text,
             'email': _emailController.text,
+            'password': _passwordController.text,
           });
+        }
+
+        // Persistir sesión en SharedPreferences para mantener al usuario logueado
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('saved_uid', user.uid);
+          await prefs.setBool('saved_isAdmin', _isAdmin);
+        } catch (_) {
+          // ignore prefs errors
         }
 
         // Cerrar diálogo de carga
@@ -81,13 +95,21 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         );
 
-        // Esperar un momento para que el usuario vea el SnackBar, luego redirigir al login
+        // Esperar un momento para que el usuario vea el SnackBar, luego redirigir al Home
         await Future.delayed(const Duration(seconds: 1));
         if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-        );
+
+        if (_isAdmin) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => HomePageAD()),
+            (Route<dynamic> route) => false,
+          );
+        } else {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => HomePage()),
+            (Route<dynamic> route) => false,
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       // Cerrar diálogo de carga si está abierto
@@ -268,66 +290,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       child:
                           const Text('Registrarse'), // Texto dentro del botón.
                       onPressed: () async {
-                        if (formKey.currentState!.validate()) {
-                          try {
-                            final UserCredential userCredential =
-                                await FirebaseAuth.instance
-                                    .createUserWithEmailAndPassword(
-                              email: _emailController.text.trim(),
-                              password: _passwordController.text.trim(),
-                            );
-                            final User? user = userCredential.user;
-
-                            // Almacena la información del usuario en la colección correspondiente
-                            if (_isAdmin) {
-                              await FirebaseFirestore.instance
-                                  .collection('admin')
-                                  .doc(user?.uid)
-                                  .set({
-                                'uid': user!.uid,
-                                'name': _nameController.text,
-                                'email': _emailController.text,
-                                'password': _passwordController.text
-                              });
-                            } else {
-                              await FirebaseFirestore.instance
-                                  .collection('client')
-                                  .doc(user?.uid)
-                                  .set({
-                                'uid': user!.uid,
-                                'name': _nameController.text,
-                                'email': _emailController.text,
-                                'password': _passwordController.text
-                              });
-
-                            }
-
-                            // Mostrar SnackBar de éxito
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Registro completo'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-
-                            // Esperar un momento y redirigir al login
-                            await Future.delayed(const Duration(seconds: 1));
-                            if (!mounted) return;
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => LoginPage()),
-                            );
-                          } on FirebaseAuthException catch (e) {
-                            Utils.showSnackBar(e.message);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Registro incompleto: ${e.message ?? 'Error'}'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        }
+                        await signUp();
                       },
                     ),
                     const SizedBox(height: 40.0),

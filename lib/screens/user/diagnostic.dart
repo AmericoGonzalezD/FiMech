@@ -333,19 +333,18 @@ class _DiagnosticPageState extends State<DiagnosticPage> {
                         final confirm = await showDialog<bool>(
                           context: context,
                           builder: (context) => AlertDialog(
+                            backgroundColor: const Color(0xF2FFF3FF),
                             title: const Text('Confirmar rechazo'),
                             content: const Text('¿Está seguro que desea rechazar la cotización?'),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(false),
+                                style: TextButton.styleFrom(foregroundColor: Colors.red),
                                 child: const Text('Cancelar'),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(true),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.white,
-                                  backgroundColor: Colors.red,
-                                ),
+                                style: TextButton.styleFrom(foregroundColor: Colors.green[800]),
                                 child: const Text('Rechazar'),
                               ),
                             ],

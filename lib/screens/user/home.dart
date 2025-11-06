@@ -16,7 +16,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int selectedIndex =
-      0; // Índice del elemento seleccionado en la barra de navegación inferior
+  0; // Índice del elemento seleccionado en la barra de navegación inferior
 
   @override
   Widget build(BuildContext context) {
@@ -52,8 +52,8 @@ class _HomePageState extends State<HomePage> {
         elevation: 10, // Sombra del elemento
         selectedItemColor: selectedColor, // Color del elemento seleccionado
         unselectedItemColor:
-            unselectedColor, // Color del elemento no seleccionado
-        backgroundColor: const Color(0xF3FFF8F2),
+        unselectedColor, // Color del elemento no seleccionado
+        backgroundColor: const Color(0xF2FFF3FF),
 
         items: const <BottomNavigationBarItem>[
           //Elementos de la barra de navegación inferior

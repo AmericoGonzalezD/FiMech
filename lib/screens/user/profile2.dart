@@ -441,6 +441,7 @@ class _ProfilePage2State extends State<ProfilePage2> {
       return showDialog(
         context: context,
         builder: (context) => const AlertDialog(
+          backgroundColor: Color(0xF2FFF3FF),
           content: SizedBox(height: 60, child: Center(child: CircularProgressIndicator())),
         ),
       );

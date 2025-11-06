@@ -130,9 +130,9 @@ class _TrackFormADState extends State<TrackFormAD> {
     // Obtener el email del usuario
     String userEmail = await getUserEmail(widget._appointment.userId);
     EmailSender.sendMailFromGmailAceptado(userEmail);
-    Navigator.push(
-      context,
+    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => HomePageAD()),
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -169,9 +169,9 @@ class _TrackFormADState extends State<TrackFormAD> {
 
     EmailSender.sendMailFromGmailRevision(userEmail);
 
-    Navigator.push(
-      context,
+    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => HomePageAD()),
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -205,9 +205,9 @@ class _TrackFormADState extends State<TrackFormAD> {
     String userEmail = await getUserEmail(widget._appointment.userId);
     EmailSender.sendMailFromGmailDiagnostico(userEmail);
 
-    Navigator.push(
-      context,
+    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const HomePageAD()),
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -239,9 +239,9 @@ class _TrackFormADState extends State<TrackFormAD> {
     // Obtener el email del usuario
     String userEmail = await getUserEmail(widget._appointment.userId);
     EmailSender.sendMailFromGmailCompletado(userEmail);
-    Navigator.push(
-      context,
+    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const HomePageAD()),
+      (Route<dynamic> route) => false,
     );
   }
 

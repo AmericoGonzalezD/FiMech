@@ -162,6 +162,7 @@ class _LoginPageState extends State<LoginPage> {
               Navigator.of(context).pop(true);
             });
             return AlertDialog(
+              backgroundColor: const Color(0xF2FFF3FF),
               title: const Text('Error'),
               content: const Text('Contraseña incorrecta. Inténtalo de nuevo.'),
               actions: <Widget>[
@@ -169,6 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
+                  style: TextButton.styleFrom(foregroundColor: Colors.green[800]),
                   child: const Text('Aceptar'),
                 ),
               ],

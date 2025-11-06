@@ -33,6 +33,9 @@ class _TrackingPageState extends State<TrackingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(
+                height: 20,
+              ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 15),
                 child: Text(

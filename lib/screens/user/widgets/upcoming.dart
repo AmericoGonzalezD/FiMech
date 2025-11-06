@@ -138,23 +138,58 @@ class _CardAppointmentState extends State<CardAppointment> {
   void setAppointment(Appointment appointment) {}
 
   Future<void> _cancelCite() async {
-    await FirebaseFirestore.instance
-        .collection('citas')
-        .doc(_appointment!.id)
-        .update({'status': 'Cancelado'});
+    // Mostrar diálogo de confirmación antes de cancelar
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xF2FFF3FF),
+          title: const Text('Confirmar cancelación'),
+          content: const Text('¿Está seguro que desea cancelar la cita?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('La cita se ha cancelado correctamente'),
-      ),
-    );
-    setState(() {});
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HomePage(),
-      ),
-    );
+    // Si el usuario confirmó, proceder a cancelar
+    if (confirmed == true) {
+      await FirebaseFirestore.instance
+          .collection('citas')
+          .doc(_appointment!.id)
+          .update({'status': 'Cancelado'});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La cita se ha cancelado correctamente'),
+        ),
+      );
+      setState(() {});
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomePage(),
+        ),
+      );
+    }
   }
 
   @override

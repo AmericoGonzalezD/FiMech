@@ -45,7 +45,7 @@ class _UpcomingScheduleADState extends State<UpcomingScheduleAD> {
           .get();
 
       return snapshot.docs.map((doc) {
-        return Appointment.fromJson(doc.id, doc.data()!);
+        return Appointment.fromJson(doc.id, doc.data());
       }).toList();
     } catch (e) {
       // Error fetching pending appointments for mechanic
@@ -161,23 +161,53 @@ class _CardAppointmentState extends State<CardAppointment> {
   }
 
   Future<void> _cancelCite() async {
-    await FirebaseFirestore.instance
-        .collection('citas')
-        .doc(_appointment!.id)
-        .update({'status': 'Cancelado'});
+    // Mostrar diálogo de confirmación antes de cancelar la cita
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xF2FFF3FF),
+          title: const Text('Confirmar cancelación'),
+          content: const Text('¿Está seguro que desea cancelar la cita?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.green[800],
+              ),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('La cita se ha cancelado correctamente'),
-      ),
-    );
-    setState(() {});
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HomePageAD(),
-      ),
-    );
+    if (confirmed == true) {
+      await FirebaseFirestore.instance
+          .collection('citas')
+          .doc(_appointment!.id)
+          .update({'status': 'Cancelado'});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La cita se ha cancelado correctamente'),
+        ),
+      );
+      setState(() {});
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomePageAD(),
+        ),
+      );
+    }
   }
 
   @override

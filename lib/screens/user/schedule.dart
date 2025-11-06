@@ -6,6 +6,7 @@ import 'package:fimech/screens/user/widgets/cancelled.dart';
 import 'package:fimech/screens/user/widgets/completed.dart';
 import 'package:fimech/screens/user/widgets/upcoming.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fimech/router.dart';
 
 class SchedulePage extends StatefulWidget {
   final bool showReturnButton; // si true, muestra el botón para regresar al formulario
@@ -15,15 +16,39 @@ class SchedulePage extends StatefulWidget {
   State<SchedulePage> createState() => _SchedulePageState();
 }
 
-class _SchedulePageState extends State<SchedulePage> {
+class _SchedulePageState extends State<SchedulePage> with RouteAware {
   int _buttonIndex = 0;
-  final _ScheduleWidgets = [
-    UpcomingSchedule(),
-    //CompletedWidget
-    CompletedSchedule(),
-    //CanceledWidget
-    CancelledSchedule(),
-  ];
+
+  // Devuelve nuevas instancias para forzar refresco cuando se hace setState
+  List<Widget> get _scheduleWidgets => [
+        UpcomingSchedule(),
+        CompletedSchedule(),
+        CancelledSchedule(),
+      ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPush() {
+    // La pantalla fue empujada
+    setState(() {});
+  }
+
+  @override
+  void didPopNext() {
+    // Volvimos a esta pantalla desde otra; refrescar
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +94,9 @@ class _SchedulePageState extends State<SchedulePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(
+                height: 20,
+              ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 15),
                 child: Text(
@@ -157,7 +185,7 @@ class _SchedulePageState extends State<SchedulePage> {
               const SizedBox(
                 height: 30,
               ),
-              _ScheduleWidgets[_buttonIndex],
+              _scheduleWidgets[_buttonIndex],
             ],
           ),
         ),
@@ -166,14 +194,22 @@ class _SchedulePageState extends State<SchedulePage> {
         padding: const EdgeInsets.only(bottom: 10),
         child: FloatingActionButton(
           backgroundColor: Colors.green[300],
-          onPressed: () {
-            Navigator.push(
-              // Navega a la página de notificaciones (NotifiesPage)
+          onPressed: () async {
+            // Abrir el formulario y esperar el resultado. Si devuelve true,
+            // significa que el formulario guardó una cita y cerró con pop(true).
+            final result = await Navigator.push<bool?>(
               context,
               MaterialPageRoute(
-                  builder: (context) =>
-                      const CiteForm(workshopData: {},)), // Crea una ruta para la página de notificaciones
+                builder: (context) => const CiteForm(workshopData: {}),
+              ),
             );
+            // Si el formulario indicó que guardó la cita, refrescar la pantalla
+            // para actualizar la lista de citas. Esto devuelve a la misma
+            // instancia de SchedulePage, por lo que la bottom navigation se
+            // mantiene visible.
+            if (result == true) {
+              setState(() {});
+            }
           },
           child: const Icon(Icons.add, color: Colors.white),
         ),

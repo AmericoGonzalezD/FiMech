@@ -38,7 +38,7 @@ class _HomePageADState extends State<HomePageAD> {
         elevation: 10,
         selectedItemColor: selectedColor,
         unselectedItemColor: unselectedColor,
-        backgroundColor: Colors.white.withOpacity(1),
+        backgroundColor: const Color(0xF2FFF3FF),
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month),
